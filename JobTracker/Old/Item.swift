@@ -2,8 +2,6 @@
 //  Item.swift
 //  JobTracker
 //
-//  Created by Alejandro on 1/31/26.
-//
 
 import Foundation
 import SwiftData

@@ -2,14 +2,13 @@
 //  JobTrackerApp.swift
 //  JobTracker
 //
-//  Created by Alejandro on 1/31/26.
-//
 
 import SwiftUI
 import SwiftData
 
 @main
 struct JobTrackerApp: App {
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -25,8 +24,9 @@ struct JobTrackerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
         }
         .modelContainer(sharedModelContainer)
+        .windowResizability(.contentMinSize)
     }
 }
