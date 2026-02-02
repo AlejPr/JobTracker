@@ -25,6 +25,7 @@ struct HomeView: View {
             
             VStack(spacing: 0) {
                 Sidebar(selectedItem: $sideBarSelectedItem, selectedItemUpdated: {
+                    _ = navigationPath.popLast()
                     navigationPath.append(sideBarSelectedItem.rawValue)
                 })
                 
@@ -97,10 +98,7 @@ struct HomeView: View {
              
         }
         
-        
-        .onTapGesture {
-            isSearchFieldFocused = false
-        }
+        .onTapGesture { isSearchFieldFocused = false }
         
     }
     

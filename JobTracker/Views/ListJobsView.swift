@@ -9,83 +9,139 @@ import SwiftData
 struct ListJobsView: View {
     
     var jobListings = sampleData
-
+    
     var body: some View {
-        
         ZStack {
             Color.white
             
             ScrollView {
-                VStack {
-                    VStack {
-                        ForEach(sampleData) { jobListing in
-                            JobListingView(jobListing: jobListing)
-                        }
-                    }.padding(.bottom, 25)
-                    
-                    ForEach(sampleData) { jobListing in
-                        JobListingView(jobListing: jobListing)
-                    }
-                    
-                    Spacer()
-                }.padding(.top, 25)
+                
+                Spacer()
+                    .frame(height: 20)
+                
+                let sortedListingGroups = sortJobListingsByDate(jobListings)
+                ForEach(sortedListingGroups.indices, id: \.self) { groupIndex in
+                    JobListingGroup(jobListings: sortedListingGroups[groupIndex])
+                        .padding(.bottom, 20)
+                }
+                
+                Spacer()
+                    .frame(height: 80)
+                
             }
-
         }
         
+    }
+    
+    private func sortJobListingsByDate(_ listings:[JobListing]) -> [[JobListing]] {
+        let currentDate = Date()
+        var res = [[JobListing]]()
+        var curr = [JobListing]()
+        
+        //MARK: -
+        //Sort when requesting from SD instead
+        for listing in (listings.sorted { $0.timeStampApplied > $1.timeStampApplied }) {
+            //Last 7 days
+            if listing.timeStampApplied >= currentDate.addingTimeInterval(-604800) { curr.append(listing) }
+            
+            else {
+                if let last = curr.last, !Calendar.current.isDate(last.timeStampApplied, inSameDayAs: listing.timeStampApplied) {
+                    res.append(curr)
+                    curr = []
+                }
+                
+                curr.append(listing)
+            }
+        }
+        
+        res.append(curr)
+        return res
     }
     
 }
 
 
+//MARK: - Section
+fileprivate struct JobListingGroup: View {
+    
+    var jobListings: [JobListing]
+    var thisWeek: Bool {
+        jobListings.first!.timeStampApplied >= Date().addingTimeInterval(-604800)
+    }
+    
+    var body: some View {
+        
+        VStack(alignment: .leading, spacing: 8) {
+            Text(thisWeek ? "This Week" : headerDate )
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Color(red: 75/255, green: 85/255, blue: 99/255))
+                .padding(.leading, 30)
+            
+            ForEach(jobListings) { jobListing in
+                JobListingView(jobListing: jobListing)
+            }
+        }
+        
+    }
+    
+    private var headerDate: String {
+        return dateFormatter.string(from: jobListings.first!.timeStampApplied)
+    }
+    
+}
 
 
+//MARK: - Individual Rows
 fileprivate struct JobListingView: View {
     
     var jobListing: JobListing
     
     var body: some View {
         
-        HStack {
-            VStack {
-                Text("\(jobListing.company.prefix(1))")
-                    .frame(width: 45, height: 45)
-                    .background(Color.blue)
-                    .cornerRadius(5)
-                    .padding(.leading, 20)
-                    .padding(.bottom, 30)
-            }
-            
-            VStack(alignment: .leading, spacing: 5) {
-                
-                Text("\(jobListing.title)")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.black)
-                Text("\(jobListing.company)")
-                    .font(.title3)
-                    .foregroundStyle(.black)
-                
-                HStack {
-                    jobAttributes()
+        Button { print("\(jobListing.title), \(jobListing.company)") }
+        label: {
+            HStack {
+                VStack {
+                    Text("\(jobListing.company.prefix(1))")
+                        .font(Font.system(size: 16, weight: .medium))
+                        .frame(width: 45, height: 45)
+                        .background(Color.blue)
+                        .cornerRadius(5)
+                        .padding(.leading, 20)
+                        .padding(.bottom, 30)
                 }
-                .padding(.top, 5)
+                
+                VStack(alignment: .leading, spacing: 5) {
+                    
+                    Text("\(jobListing.title)")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.black)
+                    Text("\(jobListing.company)")
+                        .font(.title3)
+                        .foregroundStyle(.black)
+                    
+                    HStack {
+                        jobAttributes()
+                    }
+                    .padding(.top, 5)
+                    
+                }
+                .padding(.leading, 10)
+                
+                Spacer()
                 
             }
-            .padding(.leading, 10)
-            
-            Spacer()
-            
+            .padding(.vertical, 10)
+            .background(Color.white)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(sideBarDividerColor, lineWidth: 1)
+            )
+            .padding(.horizontal, 20)
+            .shadow(color: Color.black.opacity(0.1), radius: 5)
         }
-        .padding(.vertical, 10)
-        .background(Color.white)
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(sideBarDividerColor, lineWidth: 1)
-        )
-        .padding(.horizontal, 20)
-        .shadow(color: Color.black.opacity(0.1), radius: 5)
         
     }
 
@@ -105,11 +161,42 @@ fileprivate struct JobListingView: View {
 }
 
 
+
+//MARK: - Stupid date formatter
+fileprivate class CustomDateFormatter: DateFormatter, @unchecked Sendable {
+    
+    override init() {
+        super.init()
+        self.setLocalizedDateFormatFromTemplate("MMMMd")
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func string(from date: Date) -> String {
+        return super.string(from: date) + "\(daySuffix(with: date))"
+    }
+    
+    func daySuffix(with date: Date) -> String {
+        let dayOfMonth = Calendar.current.dateComponents([.day], from: date).day!
+        switch dayOfMonth {
+        case 1, 21, 31: return "st"
+        case 2, 22: return "nd"
+        case 3, 23: return "rd"
+        default: return "th"
+        }
+    }
+    
+}
+
+fileprivate let dateFormatter = CustomDateFormatter()
+
+
 #Preview {
     
     ListJobsView()
         .frame(width: 700, height: 500)
     
 }
-
 
