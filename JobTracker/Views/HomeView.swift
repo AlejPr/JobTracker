@@ -27,19 +27,11 @@ struct HomeView: View {
                 Sidebar(selectedItem: $sideBarSelectedItem, selectedItemUpdated: {
                     navigationPath.append(sideBarSelectedItem.rawValue)
                 })
-                    .containerRelativeFrame(.horizontal, { length, _ in
-                        if (length / 5) < minSidebarWidth { return minSidebarWidth }
-                        else { return length / 5 }
-                    })
                 
                 //Divider
                 Rectangle()
                     .fill(sideBarDividerColor)
                     .frame(height: 1.5)
-                    .containerRelativeFrame(.horizontal, { length, _ in
-                        if (length / 5) < minSidebarWidth { return minSidebarWidth }
-                        else { return length / 5 }
-                    })
                 
                 AddNewJobButtonView(action: {
                     withAnimation(.spring(response: 0.5)) { shouldShowAddJobButton.toggle() }
@@ -48,11 +40,16 @@ struct HomeView: View {
                 }, isVisible: $shouldShowAddJobButton)
                 .background(sideBarColor)
             }
+            .containerRelativeFrame(.horizontal, { length, _ in
+                if (length / 5) < minSidebarWidth { return minSidebarWidth }
+                else { return length / 5 }
+            })
             
             //Fake Divider Bar
             Rectangle()
                 .fill(sideBarDividerColor)
                 .frame(width: 1.5)
+                        
             
             VStack(spacing: 0) {
                 
@@ -97,6 +94,7 @@ struct HomeView: View {
                 }
 
             }
+             
         }
         
         
@@ -136,10 +134,6 @@ struct Sidebar: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 30)
-                .containerRelativeFrame(.horizontal, alignment: .leading) { length, _ in
-                    if (length / 5) < minSidebarWidth { return minSidebarWidth }
-                    return length / 5
-                }
             
             // Navigation Items
             VStack(alignment: .leading, spacing: 8) {
@@ -194,15 +188,9 @@ struct Sidebar: View {
                 }
             }
             .padding(.horizontal, 12)
-            .containerRelativeFrame(.horizontal, alignment: .leading) { length, _ in
-                if (length / 5) < minSidebarWidth { return minSidebarWidth }
-                return length / 5
-            }
-            
             Spacer()
             
         }
-        .containerRelativeFrame([.horizontal])
         .background(sideBarColor)
         
     }
@@ -270,11 +258,8 @@ struct AddNewJobButtonView: View {
             }
             .buttonStyle(.plain)
             .padding(.horizontal, buttonSidePadding)
-            .containerRelativeFrame([.horizontal], { length, _ in
-                if (length / 5) < minSidebarWidth { return minSidebarWidth }
-                else { return length / 5 }
-            })
-            .containerRelativeFrame(.vertical) { _,_ in return containerHeight}
+            .frame(minWidth: minSidebarWidth)
+            .frame(height: containerHeight)
             .transition(.move(edge: .bottom))
 
         }
@@ -357,10 +342,6 @@ struct DashboardTopBarView: View {
             .cornerRadius(25)
             .padding(.trailing, 30)
         }
-        .containerRelativeFrame(.horizontal, { length, _ in
-            if (length / 5) < minSidebarWidth { return (length - 2) - minSidebarWidth }
-            else { return (length - 2) - (length / 5) }
-        })
         .frame(height: 70)
         .background(Color.white)
         .buttonStyle(.plain)
