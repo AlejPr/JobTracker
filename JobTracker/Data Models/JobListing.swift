@@ -32,7 +32,7 @@ final class JobListing: Identifiable, Hashable {
     
 }
 
-enum JobApplicationStatus {
+enum JobApplicationStatus: Codable {
     case applied,
          rejected,
          ghosted,

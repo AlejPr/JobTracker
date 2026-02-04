@@ -11,25 +11,22 @@ struct ListJobsView: View {
     var jobListings = sampleData
     
     var body: some View {
-        ZStack {
-            Color.white
+        
+        ScrollView {
             
-            ScrollView {
-                
-                Spacer()
-                    .frame(height: 20)
-                
-                let sortedListingGroups = sortJobListingsByDate(jobListings)
-                ForEach(sortedListingGroups.indices, id: \.self) { groupIndex in
-                    JobListingGroup(jobListings: sortedListingGroups[groupIndex])
-                        .padding(.bottom, 20)
-                }
-                
-                Spacer()
-                    .frame(height: 80)
-                
+            Spacer()
+                .frame(height: 20)
+            
+            let sortedListingGroups = sortJobListingsByDate(jobListings)
+            ForEach(sortedListingGroups.indices, id: \.self) { groupIndex in
+                JobListingGroup(jobListings: sortedListingGroups[groupIndex])
+                    .padding(.bottom, 20)
             }
-        }
+            
+            Spacer()
+                .frame(height: 80)
+            
+        }.background(Color.white)
         
     }
     

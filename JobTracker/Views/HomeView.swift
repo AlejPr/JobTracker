@@ -7,7 +7,7 @@ import SwiftUI
 import SwiftData
 
 private let minSidebarWidth: CGFloat = 230
-private let sideBarColor = Color(red: 248/255, green: 249/255, blue: 250/255).opacity(1)
+public let sideBarColor = Color(red: 248/255, green: 249/255, blue: 250/255).opacity(1)
 public let sideBarDividerColor = Color(red: 227/255, green: 229/255, blue: 233/255)
 
 @Query fileprivate var jobListings: [JobListing]
