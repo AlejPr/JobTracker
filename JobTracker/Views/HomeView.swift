@@ -27,6 +27,7 @@ struct HomeView: View {
                 Sidebar(selectedItem: $sideBarSelectedItem, selectedItemUpdated: {
                     _ = navigationPath.popLast()
                     navigationPath.append(sideBarSelectedItem.rawValue)
+                    withAnimation(.spring(response: 0.5)) { shouldShowAddJobButton = true }
                 })
                 
                 //Divider
@@ -93,9 +94,9 @@ struct HomeView: View {
                     }
                     
                 }
+                .frame(minWidth: 450)
 
             }
-             
         }
         
         .onTapGesture { isSearchFieldFocused = false }
@@ -261,10 +262,8 @@ struct AddNewJobButtonView: View {
             .transition(.move(edge: .bottom))
 
         }
-        
     }
 
-    
 }
 
 
