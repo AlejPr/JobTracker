@@ -2,8 +2,7 @@
 //  JobListing.swift
 //  JobTracker
 //
-//  Created by Alejandro on 1/31/26.
-//
+
 
 import Foundation
 import SwiftData
@@ -16,10 +15,12 @@ final class JobListing: Identifiable, Hashable {
     var location: String?
     var payRange: String?
     var schedule: String?
+    var workLocationType: WorkLocationType?
+    var salaryType: SalaryType?
     var URL: URL
     var applicationStatus: JobApplicationStatus
     
-    init(title: String, company: String, location: String? = nil, URL: URL, payRange: String? = nil, schedule: String? = nil, date: Date = Date()) {
+    init(title: String, company: String, location: String? = nil, URL: URL, payRange: String? = nil, schedule: String? = nil, workLocationType: WorkLocationType? = nil, salaryType: SalaryType? = nil, date: Date = Date()) {
         self.title = title
         self.company = company
         self.timeStampApplied = date
@@ -27,33 +28,40 @@ final class JobListing: Identifiable, Hashable {
         self.URL = URL
         self.payRange = payRange
         self.schedule = schedule
+        self.workLocationType = workLocationType
+        self.salaryType = salaryType
         self.applicationStatus = .applied
     }
     
 }
 
-enum JobApplicationStatus: Codable {
-    case applied,
-         rejected,
-         ghosted,
-         interviewing,
-         offerPending,
-         accepted,
-         saved // ???
+enum JobApplicationStatus: String, Codable {
+    case applied = "Applied",
+         rejected = "Rejected",
+         ghosted = "Ghosted",
+         interviewing = "Interviewing",
+         offerPending = "Offer Pending",
+         accepted = "Accepted",
+         saved = "Saved"
     
     var description: String {
-        switch self {
-        case .applied: "Applied"
-        case .rejected: "Rejected"
-        case .ghosted: "Ghosted"
-        case .interviewing: "Interviewing"
-        case .offerPending: "Offer Pending"
-        case .accepted: "Accepted!"
-        case .saved: "Saved"
-        }
+        self.rawValue
     }
 }
 
+enum WorkLocationType: String, Codable, CaseIterable {
+    case onSite = "On-Site"
+    case hybrid = "Hybrid"
+    case remote = "Remote"
+}
+
+enum SalaryType: String, Codable, CaseIterable {
+    case yearly = "Yearly"
+    case monthly = "Monthly"
+    case biWeekly = "Bi-Weekly"
+    case weekly = "Weekly"
+    case hourly = "Hourly"
+}
 
 let sampleData: [JobListing] = [
     JobListing(title: "Swift Software Engineer", company: "Apple", location: "Cupertino, California", URL: URL(string: "https://apple.com")!, payRange: "$150-200k", schedule: "Full-Time", date: dateFormatter.date(from: "2026-02-01")!),

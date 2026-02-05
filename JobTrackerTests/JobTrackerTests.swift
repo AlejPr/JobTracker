@@ -2,8 +2,6 @@
 //  JobTrackerTests.swift
 //  JobTrackerTests
 //
-//  Created by Alejandro on 1/31/26.
-//
 
 import Testing
 @testable import JobTracker

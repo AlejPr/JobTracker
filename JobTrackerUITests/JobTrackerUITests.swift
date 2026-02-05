@@ -2,8 +2,6 @@
 //  JobTrackerUITests.swift
 //  JobTrackerUITests
 //
-//  Created by Alejandro on 1/31/26.
-//
 
 import XCTest
 
