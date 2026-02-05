@@ -261,10 +261,8 @@ struct AddNewJobButtonView: View {
             .transition(.move(edge: .bottom))
 
         }
-        
     }
 
-    
 }
 
 

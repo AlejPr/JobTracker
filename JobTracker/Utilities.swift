@@ -38,15 +38,19 @@ struct CustomPickerView<T: Hashable>: View {
     var padding: EdgeInsets = EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
     var disabled: Bool = false
     
-    @State private var isExpanded = false
-        
+    @Binding var expandedPickerId: String?
+    let pickerId: String
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             
             
             //Picker Button
             Button {
-                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if expandedPickerId == pickerId { expandedPickerId = nil }
+                    else { expandedPickerId = pickerId }
+                }
                 
             } label: {
                 HStack {
@@ -59,12 +63,12 @@ struct CustomPickerView<T: Hashable>: View {
                     Image(systemName: "chevron.down")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(textColor)
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                        .animation(.easeInOut(duration: 0.2), value: isExpanded)
+                        .rotationEffect(.degrees(expandedPickerId == pickerId ? 180 : 0))
+                        .animation(.easeInOut(duration: 0.2), value: expandedPickerId == pickerId)
                 }
                 .padding(padding)
                 .background(backgroundColor)
-                .cornerRadius(isExpanded ? cornerRadius : cornerRadius)
+                .cornerRadius(expandedPickerId == pickerId ? cornerRadius : cornerRadius)
                 .overlay(
                     RoundedRectangle(cornerRadius: cornerRadius)
                         .stroke(borderColor, lineWidth: 1)
@@ -75,9 +79,7 @@ struct CustomPickerView<T: Hashable>: View {
             
             //Menu
             .overlay(alignment: .topLeading) {
-                if isExpanded {
-                    dropDownMenu()
-                }
+                if expandedPickerId == pickerId { dropDownMenu() }
             }
             
             .overlay {
@@ -97,7 +99,7 @@ struct CustomPickerView<T: Hashable>: View {
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) {
                         selection = option
-                        isExpanded = false
+                        expandedPickerId = nil
                     }
                 } label: {
                     HStack {
@@ -143,17 +145,13 @@ struct CustomPickerView<T: Hashable>: View {
 
 //MARK: - Preview
 #Preview {
+    /*
     struct PreviewContainer: View {
         @State private var testString: String = ""
         var body: some View {
-            ZStack {
-                Color.white
-                TextField("", text: $testString)
-                    .foregroundStyle(.black)
-                    .textFieldStyle(.plain)
-                    .modifier(TextFieldPlaceholderStyle(showPlaceHolder: true, placeholder: "Testing!", textColor: .blue))
-            }
+
         }
      }
     return PreviewContainer()
+     */
 }
