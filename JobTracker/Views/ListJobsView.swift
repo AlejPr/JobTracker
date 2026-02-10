@@ -8,16 +8,29 @@ import SwiftData
 
 struct ListJobsView: View {
     
-    var jobListings = sampleData
+    @Query(sort: \JobListing.timeStampApplied, order: .reverse) private var jobListings: [JobListing]
+    var previewDebug = false // Stupid shit won't load the inmem container context in previews, but works in builds...???
     
     var body: some View {
-        
+        if !jobListings.isEmpty || previewDebug {
+            contentView
+        }
+        else {
+            ZStack {
+                Color.white
+                Text("No Listings!")
+                    .foregroundStyle(.black)
+            }
+        }
+    }
+    
+    var contentView: some View {
         ScrollView {
             
             Spacer()
                 .frame(height: 20)
             
-            let sortedListingGroups = sortJobListingsByDate(jobListings)
+            let sortedListingGroups = groupJobListingsByDate(jobListings.isEmpty ? JobListing.sampleData.sorted { $0.timeStampApplied > $1.timeStampApplied } : jobListings )
             ForEach(sortedListingGroups.indices, id: \.self) { groupIndex in
                 JobListingGroup(jobListings: sortedListingGroups[groupIndex])
                     .padding(.bottom, 20)
@@ -27,17 +40,14 @@ struct ListJobsView: View {
                 .frame(height: 80)
             
         }.background(Color.white)
-        
     }
     
-    private func sortJobListingsByDate(_ listings:[JobListing]) -> [[JobListing]] {
+    private func groupJobListingsByDate(_ listings:[JobListing]) -> [[JobListing]] {
         let currentDate = Date()
         var res = [[JobListing]]()
         var curr = [JobListing]()
         
-        //MARK: -
-        //Sort when requesting from SD instead
-        for listing in (listings.sorted { $0.timeStampApplied > $1.timeStampApplied }) {
+        for listing in listings {
             //Last 7 days
             if listing.timeStampApplied >= currentDate.addingTimeInterval(-604800) { curr.append(listing) }
             
@@ -51,7 +61,8 @@ struct ListJobsView: View {
             }
         }
         
-        res.append(curr)
+        if !curr.isEmpty { res.append(curr) }
+        //res.append(curr)
         return res
     }
     
@@ -191,9 +202,12 @@ fileprivate let dateFormatter = CustomDateFormatter()
 
 
 #Preview {
-    
-    ListJobsView()
+    ListJobsView(previewDebug: true)
+        .modelContainer(sampleDataContainer.modelContainer)
         .frame(width: 700, height: 500)
-    
 }
 
+#Preview("No Listings") {
+    ListJobsView()
+        .modelContainer(for: [JobListing.self])
+}

@@ -10,8 +10,6 @@ private let minSidebarWidth: CGFloat = 230
 public let sideBarColor = Color(red: 248/255, green: 249/255, blue: 250/255).opacity(1)
 public let sideBarDividerColor = Color(red: 227/255, green: 229/255, blue: 233/255)
 
-@Query fileprivate var jobListings: [JobListing]
-
 struct HomeView: View {
     
     @State private var visibility: NavigationSplitViewVisibility = .automatic
@@ -19,6 +17,8 @@ struct HomeView: View {
     @State private var shouldShowAddJobButton: Bool = true
     @State private var navigationPath = [String]()
     @FocusState private var isSearchFieldFocused: Bool
+    
+    @Query(sort: \JobListing.timeStampApplied, order: .reverse) fileprivate var jobListings: [JobListing]
     
     var body: some View {
         HStack(spacing: 0) {
