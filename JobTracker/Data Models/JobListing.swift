@@ -65,23 +65,87 @@ extension JobListing {
         case hourly = "Hourly"
     }
     
-    static let sampleData: [JobListing] = [
-        JobListing(title: "Swift Software Engineer", company: "Apple", location: "Cupertino, California", jobURL: URL(string: "https://apple.com")!, payRange: "$150-200k", schedule: "Full-Time", date: dateFormatter.date(from: "2026-02-01")!),
-        JobListing(title: "Junior Backend Developer", company: "Microsoft", location: "Redmond, Washington", jobURL: URL(string: "https://microsoft.com")!, payRange: "$120-180k", schedule: "Full-Time", date: dateFormatter.date(from: "2026-02-01")!),
-        JobListing(title: "UX Engineer, iOS, Google Search App", company: "Google", location: "California", jobURL: URL(string: "https://google.com")!, payRange: "Not Provided", schedule: "Full-Time", date: dateFormatter.date(from: "2026-01-15")!),
-        JobListing(title: "iOS Engineer (Audible)", company: "Amazon", location: "Austin, Texas", jobURL: URL(string: "https://amazon.com")!, payRange: "$140-180k", schedule: "Full-Time", date: dateFormatter.date(from: "2026-01-15")!),
-        JobListing(title: "iOS Frameworks Engineer, Platform Privacy", company: "Apple", location: "Cupertino, California", jobURL: URL(string: "https://apple.com")!, payRange: "$120-180k", schedule: "Full-Time", date: dateFormatter.date(from: "2026-01-15")!),
-        JobListing(title: "Wagie", company: "Amazon", location: "Hell", jobURL: URL(string: "https://amazon.com")!, payRange: "$12/hr", schedule: "Suicidal", date: dateFormatter.date(from: "2026-01-02")!)
-    ]
+}
+
+
+//MARK: - Sample Data
+extension JobListing {
+    
+    // Helper function to create dates safely
+    private static func makeDate(year: Int, month: Int, day: Int) -> Date {
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = day
+        components.hour = 12 // Set to noon to avoid timezone issues
+        return Calendar.current.date(from: components) ?? Date()
+    }
+    
+    static var sampleData: [JobListing] {[
+        JobListing(
+            title: "Unemployment assistance",
+            company: "Government",
+            location: "Florida",
+            jobURL: URL(string: "https://apple.com")!,
+            payRange: "$1k / mo"
+        ),
+        JobListing(
+            title: "Swift Software Engineer",
+            company: "Apple",
+            location: "Cupertino, California",
+            jobURL: URL(string: "https://apple.com")!,
+            payRange: "$150-200k",
+            schedule: "Full-Time",
+            date: makeDate(year: 2026, month: 2, day: 1)
+        ),
+        JobListing(
+            title: "Junior Backend Developer",
+            company: "Microsoft",
+            location: "Redmond, Washington",
+            jobURL: URL(string: "https://microsoft.com")!,
+            payRange: "$120-180k",
+            schedule: "Full-Time",
+            date: makeDate(year: 2026, month: 2, day: 1)
+        ),
+        JobListing(
+            title: "UX Engineer, iOS, Google Search App",
+            company: "Google",
+            location: "California",
+            jobURL: URL(string: "https://google.com")!,
+            payRange: "Not Provided",
+            schedule: "Full-Time",
+            date: makeDate(year: 2026, month: 1, day: 15)
+        ),
+        JobListing(
+            title: "iOS Engineer (Audible)",
+            company: "Amazon",
+            location: "Austin, Texas",
+            jobURL: URL(string: "https://amazon.com")!,
+            payRange: "$140-180k",
+            schedule: "Full-Time",
+            date: makeDate(year: 2026, month: 1, day: 15)
+        ),
+        JobListing(
+            title: "iOS Frameworks Engineer, Platform Privacy",
+            company: "Apple",
+            location: "Cupertino, California",
+            jobURL: URL(string: "https://apple.com")!,
+            payRange: "$120-180k",
+            schedule: "Full-Time",
+            date: makeDate(year: 2026, month: 1, day: 15)
+        ),
+        JobListing(
+            title: "Wagie",
+            company: "Amazon",
+            location: "Hell",
+            jobURL: URL(string: "https://amazon.com")!,
+            payRange: "$12/hr",
+            schedule: "Suicidal",
+            date: makeDate(year: 2026, month: 1, day: 2)
+        )
+    ]}
     
 }
 
 typealias WorkLocationType = JobListing.WorkLocationType
 typealias SalaryType = JobListing.SalaryType
-
-fileprivate var dateFormatter: DateFormatter = {
-    let df = DateFormatter()
-    df.dateFormat = "yyyy-MM-dd"
-    return df
-}()
-

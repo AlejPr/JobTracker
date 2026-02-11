@@ -10,24 +10,24 @@ import SwiftUI
 @Observable
 @MainActor
 class SwiftDataContainer {
-    var modelContainer: ModelContainer
-    var context: ModelContext { return modelContainer.mainContext }
+    let modelContainer: ModelContainer
+    var context: ModelContext { modelContainer.mainContext }
     
-    init(memoryOnly: Bool = false) {
+    init(_ memoryOnly: Bool = false) {
         let schema = Schema([
             JobListing.self
         ])
         
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: memoryOnly)
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: memoryOnly)
+        
         do {
-            modelContainer = try ModelContainer(for: schema, configurations: config)
+            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
             
             if memoryOnly { loadSampleData() }
             
-            //try context.save()
         } catch {
             //TODO: - implement a pop up or something
-            fatalError("Could not initialize Swiftdata model, \(error)")
+            fatalError("Could not initialize SwiftData container with error: \(error)")
         }
     }
     
@@ -40,4 +40,12 @@ class SwiftDataContainer {
 }
 
 
-let sampleDataContainer = SwiftDataContainer(memoryOnly: true)
+let sampleDataContainer = SwiftDataContainer(true)
+
+extension View {
+    func sampleContainer() -> some View {
+        self
+            .environment(sampleDataContainer)
+            .modelContainer(sampleDataContainer.modelContainer)
+    }
+}

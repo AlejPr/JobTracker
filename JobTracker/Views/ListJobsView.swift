@@ -9,15 +9,14 @@ import SwiftData
 struct ListJobsView: View {
     
     @Query(sort: \JobListing.timeStampApplied, order: .reverse) private var jobListings: [JobListing]
-    var previewDebug = false // Stupid shit won't load the inmem container context in previews, but works in builds...???
     
     var body: some View {
-        if !jobListings.isEmpty || previewDebug {
+        if !jobListings.isEmpty {
             contentView
         }
         else {
             ZStack {
-                Color.white
+                Color.blue
                 Text("No Listings!")
                     .foregroundStyle(.black)
             }
@@ -30,7 +29,7 @@ struct ListJobsView: View {
             Spacer()
                 .frame(height: 20)
             
-            let sortedListingGroups = groupJobListingsByDate(jobListings.isEmpty ? JobListing.sampleData.sorted { $0.timeStampApplied > $1.timeStampApplied } : jobListings )
+            let sortedListingGroups = groupJobListingsByDate(jobListings)
             ForEach(sortedListingGroups.indices, id: \.self) { groupIndex in
                 JobListingGroup(jobListings: sortedListingGroups[groupIndex])
                     .padding(.bottom, 20)
@@ -202,8 +201,8 @@ fileprivate let dateFormatter = CustomDateFormatter()
 
 
 #Preview {
-    ListJobsView(previewDebug: true)
-        .modelContainer(sampleDataContainer.modelContainer)
+    ListJobsView()
+        .sampleContainer()
         .frame(width: 700, height: 500)
 }
 
