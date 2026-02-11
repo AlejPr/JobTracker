@@ -9,3 +9,4 @@
  - Fix divider thickness during resize animations
  - Fix Toolbar button being dragged in from the bottom during animation
  
+- !!Update NavigationRequestObserver tried to update multiple times per frame. ?

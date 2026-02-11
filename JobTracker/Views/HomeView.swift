@@ -25,11 +25,12 @@ struct HomeView: View {
                     selectedItem: $viewModel.sideBarSelectedItem,
                     onItemSelected: viewModel.sideBarItemSelected
                 )
+                .padding(.bottom, -5) //Prevents weird discoloration during animations
                 
                 //Divider
                 Rectangle()
-                    .fill(sideBarDividerColor)
-                    .frame(height: 1.5)
+                    .fill(viewModel.shouldShowAddJobButton ? sideBarDividerColor : Color.clear)
+                    .frame(height: 2)
                 
                 LargeStylizedButton(
                     action: viewModel.addNewJobTapped,
@@ -38,8 +39,9 @@ struct HomeView: View {
                     isVisible: viewModel.shouldShowAddJobButton
                 )
                 .background(sideBarColor)
-                
+                .transition(.move(edge: .bottom))
             }
+            .transition(.opacity)
             .containerRelativeFrame(.horizontal, { length, _ in
                 if (length / 5) < minSidebarWidth { return minSidebarWidth }
                 else { return length / 5 }
@@ -48,7 +50,7 @@ struct HomeView: View {
             //Fake Divider Bar
             Rectangle()
                 .fill(sideBarDividerColor)
-                .frame(width: 1.5)
+                .frame(width: 2)
                         
             
             GeometryReader { proxy in
@@ -68,7 +70,7 @@ struct HomeView: View {
                     //Divider Bar
                     Rectangle()
                         .fill(sideBarDividerColor)
-                        .frame(height: 1.5)
+                        .frame(height: 2)
                     
                     //Navigation Stack
                     NavigationStack(path: $viewModel.navigationPath) {

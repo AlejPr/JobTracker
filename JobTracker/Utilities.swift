@@ -143,6 +143,7 @@ struct CustomPickerView<T: Hashable>: View {
 }
 
 
+//MARK: - Button
 struct LargeStylizedButton: View {
     
     let action: () -> Void
@@ -150,7 +151,8 @@ struct LargeStylizedButton: View {
     let containerHeight: CGFloat = 90
     let imageName: String 
     let title: String
-    var isVisible: Bool 
+    var isVisible: Bool = true
+    var disabled: Bool = false
     
     var body: some View {
         if isVisible {
@@ -169,14 +171,13 @@ struct LargeStylizedButton: View {
                 .foregroundColor(.white)
                 .frame(height: 48)
                 .frame(maxWidth: .infinity)
-                .background(Color.blue)
+                .background(disabled ? Color.gray : Color.blue)
                 .cornerRadius(8)
             }
             .buttonStyle(.plain)
             .padding(.horizontal, buttonSidePadding)
             .frame(height: containerHeight)
-            .transition(.move(edge: .bottom))
-
+            .allowsHitTesting(!disabled)
         }
     }
     

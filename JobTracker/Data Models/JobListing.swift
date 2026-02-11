@@ -44,7 +44,8 @@ extension JobListing {
              interviewing = "Interviewing",
              offerPending = "Offer Pending",
              accepted = "Accepted",
-             saved = "Saved"
+             saved = "Saved",
+             emailed = "Emailed"
         
         var description: String {
             self.rawValue

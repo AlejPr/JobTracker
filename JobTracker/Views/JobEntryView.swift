@@ -5,76 +5,63 @@
 
 import SwiftUI
 import SwiftData
+import Combine
 import WebKit
 
 
 struct JobEntryView: View {
 
-    @State private var listingLink: String = ""
-    @State private var jobTitle: String = ""
-    @State private var companyName: String = ""
-    @State private var location: String = ""
-    @State private var workLocationType: WorkLocationType = .onSite
-    @State private var salaryRange: String = ""
-    @State private var salaryNotListed: Bool = false
-    @State private var salaryType: SalaryType = .yearly
-    @State private var notes: String = ""
-
-    @State private var autofill: Bool = true
-    @State private var saveWebPage: Bool = true
-    
-    @State private var isEditing: Bool = false
-    @State var expandedPickerId: String?
-    @State var showTooltip: Bool = false
-    
+    @StateObject private var viewModel = ViewModel()
     let geometryProxy: GeometryProxy
-    private var isCompact: Bool { return geometryProxy.size.width < 900 }
+    
+    private var isCompact: Bool { geometryProxy.size.width < 900 }
     
     var body: some View {
-        
         ScrollView {
+            
             Group {
-                if !isCompact {
-                    //MARK: - Horizontal Layout
-                    HStack(alignment: .top, spacing: 0) {
-                        LazyVStack {
-                            infoBody
-                                .zIndex(1000)
-                            
-                            Spacer()
-                            
-                            LargeStylizedButton(action: addJobButtonPressed,
-                                                imageName: "plus", title: "Add Job", isVisible: true)
-                            .padding(.horizontal, 12)
-                            .padding(.top, 70)
-                        }
-                        .frame(maxWidth: 600)
-                        
-                        webPreview
-                            .padding(.trailing, 24)
-                    }
-                    
-                } else {
-                    //MARK: - Vertical Layout
-                    LazyVStack(alignment: .leading, spacing: -10) {
-                        infoBody
-                            .zIndex(1000)
-                        
-                        webPreview
-                            .padding(.bottom, 50)
-                    }
-                }
+                if !isCompact { horizontalLayout }
+                else { verticalLayout }
             }
             .transition(.opacity)
             .animation(.easeInOut(duration: 0.25), value: isCompact)
         }
         .background(Color.white)
-        .onTapGesture {
-            isEditing = false
-            expandedPickerId = nil
-            showTooltip = false
+        .onTapGesture { viewModel.dismissOverlays() }
+    }
+    
+    
+    private var horizontalLayout: some View {
+        HStack(alignment: .top, spacing: 0) {
+            LazyVStack {
+                infoBody
+                    .zIndex(1000)
+                
+                Spacer()
+                
+                AddJobButton(
+                    isEnabled: viewModel.canSaveJob,
+                    action: viewModel.addJobButtonPressed
+                )
+                .padding(.horizontal, 12)
+                .padding(.top, 70)
+            }
+            .frame(maxWidth: 600)
+            
+            webPreview
+                .padding(.trailing, 24)
         }
-        
+    }
+    
+    
+    private var verticalLayout: some View {
+        LazyVStack(alignment: .leading, spacing: -10) {
+            infoBody
+                .zIndex(1000)
+            
+            webPreview
+                .padding(.bottom, 50)
+        }
     }
     
     
@@ -82,9 +69,8 @@ struct JobEntryView: View {
     var infoBody: some View {
         VStack(alignment: .leading, spacing: 24) {
             
-            //Listing Link
+            // Listing Link
             VStack(alignment: .leading, spacing: 8) {
-
                 HStack {
                     Text("Listing Link")
                         .font(.system(size: 14, weight: .medium))
@@ -92,56 +78,95 @@ struct JobEntryView: View {
                     
                     Spacer()
                     
-                    LabeledButton(selected: $autofill, labelText: "Autofill")
+                    LabeledButton(
+                        selected: $viewModel.autofill,
+                        labelText: "Autofill"
+                    )
                 }
                 
-                TextField(" ", text: $listingLink)
+                TextField(" ", text: $viewModel.listingLink)
                     .textFieldStyle(CustomTextFieldStyle())
-                    .modifier(TextFieldPlaceholderStyle(showPlaceHolder: listingLink == "", placeholder: "https://example.com/job-listing", textColor: Color.gray))
+                    .modifier(TextFieldPlaceholderStyle(
+                        showPlaceHolder: viewModel.listingLink.isEmpty,
+                        placeholder: "https://example.com/job-listing",
+                        textColor: Color.gray
+                    ))
                     .background(sideBarColor)
             }
             
-            LabeledTextField(header: "Job Title", placeHolderText: "macOS Developer", textFieldText: $jobTitle)
-            LabeledTextField(header: "Company Name", placeHolderText: "Apple Inc.", textFieldText: $companyName)
+            LabeledTextField(
+                header: "Job Title",
+                placeHolderText: "macOS Developer",
+                required: true,
+                textFieldText: $viewModel.jobTitle
+            )
+            
+            LabeledTextField(
+                header: "Company Name",
+                placeHolderText: "Apple Inc.",
+                required: true,
+                textFieldText: $viewModel.companyName
+            )
             
             HStack(alignment: .bottom, spacing: 20) {
-                LabeledTextField(header: "Location", placeHolderText: "Cupertino, CA", textFieldText: $location)
+                LabeledTextField(
+                    header: "Location",
+                    placeHolderText: "Cupertino, CA",
+                    textFieldText: $viewModel.location
+                )
                 
-                CustomPickerView(options: WorkLocationType.allCases,
-                                 displayName: { $0.rawValue },
-                                 selection: $workLocationType,
-                                 backgroundColor: sideBarColor,
-                                 borderColor: sideBarDividerColor,
-                                 textColor: Color.black,
-                                 padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
-                                 expandedPickerId: $expandedPickerId,
-                                 pickerId: "WorkLocationTypePickerID")
+                CustomPickerView(
+                    options: WorkLocationType.allCases,
+                    displayName: { $0.rawValue },
+                    selection: $viewModel.workLocationType,
+                    backgroundColor: sideBarColor,
+                    borderColor: sideBarDividerColor,
+                    textColor: Color.black,
+                    padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
+                    expandedPickerId: $viewModel.expandedPickerId,
+                    pickerId: "WorkLocationTypePickerID"
+                )
                 .frame(minWidth: 140)
-                
-            }.zIndex(1000)
+            }
+            .zIndex(1000)
             
-            //Salary Range
+            // Salary Range
             HStack(alignment: .bottom, spacing: 20) {
-                LabeledTextField(header: "Salary Range", placeHolderText: "$120k - 150k", disabled: salaryNotListed, textFieldText: $salaryRange)
+                LabeledTextField(
+                    header: "Salary Range",
+                    placeHolderText: "$120k - 150k",
+                    disabled: viewModel.salaryNotListed,
+                    textFieldText: $viewModel.salaryRange
+                )
                 
-                CustomPickerView(options: SalaryType.allCases,
-                                 displayName: { $0.rawValue },
-                                 selection: $salaryType,
-                                 backgroundColor: sideBarColor,
-                                 borderColor: sideBarDividerColor,
-                                 textColor: Color.black,
-                                 padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
-                                 disabled: salaryNotListed,
-                                 expandedPickerId: $expandedPickerId,
-                                 pickerId: "SalaryRangeTypePickerID")
+                CustomPickerView(
+                    options: SalaryType.allCases,
+                    displayName: { $0.rawValue },
+                    selection: $viewModel.salaryType,
+                    backgroundColor: sideBarColor,
+                    borderColor: sideBarDividerColor,
+                    textColor: Color.black,
+                    padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
+                    disabled: viewModel.salaryNotListed,
+                    expandedPickerId: $viewModel.expandedPickerId,
+                    pickerId: "SalaryRangeTypePickerID"
+                )
                 .frame(minWidth: 140)
                 
-                LabeledButton(selected: $salaryNotListed, labelText: "Not Listed")
-                    .padding(.bottom, 10)
-                                
-            }.zIndex(999)
+                LabeledButton(
+                    selected: $viewModel.salaryNotListed,
+                    labelText: "Not Listed"
+                )
+                .padding(.bottom, 10)
+            }
+            .zIndex(999)
             
-            LabeledTextField(header: "Notes", placeHolderText: "Contract Job, 18 months only", axis: .vertical, textFieldText: $notes)
+            LabeledTextField(
+                header: "Notes",
+                placeHolderText: "Contract Job, 18 months only",
+                axis: .vertical,
+                textFieldText: $viewModel.notes
+            )
             
             Spacer()
         }
@@ -153,26 +178,27 @@ struct JobEntryView: View {
     //MARK: - Web Preview
     var webPreview: some View {
         VStack(spacing: 8) {
-                       
-            //TODO: - Check listing link is valid
+            
             HStack {
-                LabeledButton(selected: $saveWebPage, labelText: "Save Webpage")
+                LabeledButton(
+                    selected: $viewModel.saveWebPage,
+                    labelText: "Save Webpage"
+                )
                 
-                Button { showTooltip.toggle() }
-                label: {
+                Button {
+                    viewModel.toggleTooltip()
+                } label: {
                     Image(systemName: "questionmark.circle")
                         .font(Font.system(size: 16, weight: .medium))
                         .foregroundStyle(Color.gray)
                         .padding(.horizontal, -12)
                 }
-                
             }
             .padding(.top, 8)
-            .opacity(listingLink == "" ? 0 : 1)
-            .animation(.easeInOut(duration: 0.2), value: listingLink)
+            .opacity(viewModel.listingLink.isEmpty ? 0 : 1)
             .zIndex(1000)
             .overlay {
-                if showTooltip {
+                if viewModel.showTooltip {
                     GeometryReader { geometry in
                         HelpTooltip()
                             .position(x: 0, y: (geometry.size.height / 2) + 12)
@@ -185,9 +211,7 @@ struct JobEntryView: View {
                 .cornerRadius(12)
                 .frame(minHeight: 700)
                 .padding(.leading, 8)
-            //JobListingPreview(urlString: "https://google.com")
-                //.frame(minHeight: 200)
-                
+            // JobListingPreview(urlString: viewModel.listingLink)
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
@@ -201,38 +225,92 @@ struct JobEntryView: View {
 }
 
 
+//MARK: - View Model
+extension JobEntryView {
+    
+    @MainActor
+    final class ViewModel: ObservableObject {
+                
+        @Published var listingLink: String = ""
+        @Published var jobTitle: String = ""
+        @Published var companyName: String = ""
+        @Published var location: String = ""
+        @Published var workLocationType: WorkLocationType = .onSite
+        @Published var salaryRange: String = ""
+        @Published var salaryNotListed: Bool = false
+        @Published var salaryType: SalaryType = .yearly
+        @Published var notes: String = ""
+        
+        @Published var autofill: Bool = true
+        @Published var saveWebPage: Bool = true
+        
+        @Published var expandedPickerId: String?
+        @Published var showTooltip: Bool = false
+        
+        var canSaveJob: Bool { !jobTitle.isEmpty && !companyName.isEmpty }
+                
+        func addJobButtonPressed() {
+            guard canSaveJob else { return }
+            print("Saving job: \(jobTitle) at \(companyName)")
+        }
+        
+        func toggleTooltip() {
+            showTooltip.toggle()
+        }
+        
+        func dismissOverlays() {
+            expandedPickerId = nil
+            showTooltip = false
+        }
+    }
+    
+}
+
+
+//MARK: - Subviews
 extension JobEntryView {
     
     
     //MARK: - Text Field
     private struct LabeledTextField: View {
-        var header: String
-        var placeHolderText: String
+        let header: String
+        let placeHolderText: String
         var axis: Axis = .horizontal
         var disabled: Bool = false
+        var required: Bool = false
         @Binding var textFieldText: String
         
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
-                Text("\(header)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.black)
+                HStack(spacing: 0) {
+                    Text(header)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.black)
+                    
+                    if required {
+                        Text("*")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+                }
                 
                 TextField(" ", text: $textFieldText, axis: axis)
                     .textFieldStyle(CustomTextFieldStyle())
-                    .modifier(TextFieldPlaceholderStyle(showPlaceHolder: textFieldText == "", placeholder: placeHolderText, textColor: Color.gray))
+                    .modifier(TextFieldPlaceholderStyle(
+                        showPlaceHolder: textFieldText.isEmpty,
+                        placeholder: placeHolderText,
+                        textColor: Color.gray
+                    ))
                     .background(sideBarColor)
                     .disabled(disabled)
                     .overlay {
                         if disabled {
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.gray)
-                                .opacity(0.1)
+                                .fill(Color.gray.opacity(0.1))
                         }
                     }
             }
         }
-        
     }
     
     
@@ -253,14 +331,12 @@ extension JobEntryView {
     
     //MARK: - Buttons
     private struct LabeledButton: View {
-        
         @Binding var selected: Bool
-        var labelText: String
+        let labelText: String
         
         var body: some View {
             HStack {
-                Button { self.selected.toggle() }
-                
+                Button { selected.toggle() }
                 label: {
                     ZStack {
                         RoundedRectangle(cornerRadius: 5)
@@ -277,13 +353,28 @@ extension JobEntryView {
                 .padding(.horizontal, -10)
                 .background(Color.clear)
                 
-                Text("\(labelText)")
+                Text(labelText)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.black)
             }
         }
     }
     
+    
+    private struct AddJobButton: View {
+        let isEnabled: Bool
+        let action: () -> Void
+        
+        var body: some View {
+            LargeStylizedButton(
+                action: action,
+                imageName: "plus",
+                title: "Add Job",
+                isVisible: true,
+                disabled: !isEnabled
+            )
+        }
+    }
     
     
     //MARK: - ToolTip
@@ -295,7 +386,7 @@ extension JobEntryView {
                 // Tooltip content
                 Text(message)
                     .font(.system(size: 12))
-                    .foregroundColor(Color.black)
+                    .foregroundColor(.black)
                     .multilineTextAlignment(.leading)
                     .frame(width: 230, height: 34, alignment: .leading)
                     .padding(.horizontal, 10)
@@ -348,8 +439,7 @@ extension JobEntryView {
 }
 
 
-
-
+//MARK: - Preview
 #Preview {
     
     GeometryReader { proxy in
