@@ -143,6 +143,46 @@ struct CustomPickerView<T: Hashable>: View {
 }
 
 
+struct LargeStylizedButton: View {
+    
+    let action: () -> Void
+    let buttonSidePadding: CGFloat = 15
+    let containerHeight: CGFloat = 90
+    let imageName: String 
+    let title: String
+    var isVisible: Bool 
+    
+    var body: some View {
+        if isVisible {
+            
+            Button(action: action) {
+                HStack(spacing: 8) {
+                    
+                    Image(systemName: imageName)
+                        .font(.system(size: 16, weight: .medium))
+                        .padding(.leading, 10)
+                    
+                    Text("\(title)")
+                        .font(.system(size: 16, weight: .medium))
+                        .padding(.trailing, 20)
+                }
+                .foregroundColor(.white)
+                .frame(height: 48)
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, buttonSidePadding)
+            .frame(height: containerHeight)
+            .transition(.move(edge: .bottom))
+
+        }
+    }
+    
+}
+
+
 //MARK: - Preview
 #Preview {
     /*

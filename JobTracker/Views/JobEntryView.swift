@@ -1,5 +1,5 @@
 //
-//  AddNewJobView.swift
+//  JobEntryView.swift
 //  JobTracker
 //
 
@@ -8,7 +8,7 @@ import SwiftData
 import WebKit
 
 
-struct AddNewJobView: View {
+struct JobEntryView: View {
 
     @State private var listingLink: String = ""
     @State private var jobTitle: String = ""
@@ -41,9 +41,10 @@ struct AddNewJobView: View {
                                 
                                 Spacer()
                                 
-                                AddJobButton(action: addJobButtonPressed)
-                                    .padding(.horizontal, 12)
-                                    .padding(.top, 70)
+                                LargeStylizedButton(action: addJobButtonPressed,
+                                                    imageName: "plus", title: "Add Job", isVisible: true)
+                                .padding(.horizontal, 12)
+                                .padding(.top, 70)
                             }
                             .frame(maxWidth: 600)
                             
@@ -57,8 +58,9 @@ struct AddNewJobView: View {
                             infoBody
                                 .zIndex(1000)
                             
-                            AddJobButton(action: addJobButtonPressed)
-                                .padding(.horizontal, 10)
+                            LargeStylizedButton(action: addJobButtonPressed,
+                                                imageName: "plus", title: "Add Job", isVisible: true)
+                            .padding(.horizontal, 10)
                             
                             webPreview
                                 .padding(.bottom, 50)
@@ -203,7 +205,7 @@ struct AddNewJobView: View {
 }
 
 
-extension AddNewJobView {
+extension JobEntryView {
     
     
     //MARK: - Text Field
@@ -287,36 +289,6 @@ extension AddNewJobView {
     }
     
     
-    private struct AddJobButton: View {
-        let action: () -> Void
-        let buttonSidePadding: CGFloat = 15
-        let containerHeight: CGFloat = 90
-        
-        var body: some View {
-            Button(action: action) {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .medium))
-                        .padding(.leading, 10)
-                    
-                    Text("Add Job")
-                        .font(.system(size: 16, weight: .medium))
-                        .padding(.trailing, 20)
-                }
-                .foregroundColor(.white)
-                .frame(height: 48)
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .cornerRadius(8)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, buttonSidePadding)
-            .frame(height: containerHeight)
-            .transition(.move(edge: .bottom))
-        }
-
-    }
-    
     
     //MARK: - ToolTip
     struct HelpTooltip: View {
@@ -384,7 +356,7 @@ extension AddNewJobView {
 
 #Preview {
     
-    AddNewJobView()
+    JobEntryView()
         .frame(width: 900, height: 800)
     
 }
