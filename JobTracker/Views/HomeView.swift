@@ -51,64 +51,58 @@ struct HomeView: View {
                 .frame(width: 1.5)
                         
             
-            VStack(spacing: 0) {
+            GeometryReader { proxy in
                 
-                DashboardTopBarView(
-                    searchText: $viewModel.searchText,
-                    navigationPath: $viewModel.navigationPath,
-                    isSearchFieldFocused: $isSearchFieldFocused,
-                    onSettingsTapped: viewModel.settingsTapped,
-                    onBackTapped: viewModel.backButtonTapped
-                )
-                
-                //Divider Bar
-                Rectangle()
-                    .fill(sideBarDividerColor)
-                    .frame(height: 1.5)
-                
-                //Navigation Stack
-                NavigationStack(path: $viewModel.navigationPath) {
-                    Color.green
-                        .navigationBarBackButtonHidden(true)
-                        .navigationDestination(for: NavigationDestination.self) { destination in
-                            destination.view
-                        }
+                VStack(spacing: 0) {
+                    
+                    DashboardTopBarView(
+                        searchText: $viewModel.searchText,
+                        navigationPath: $viewModel.navigationPath,
+                        isSearchFieldFocused: $isSearchFieldFocused,
+                        geometryProxy: proxy,
+                        onSettingsTapped: viewModel.settingsTapped,
+                        onBackTapped: viewModel.backButtonTapped,
+                        addJobEntryTapped: { }
+                    )
+                    
+                    //Divider Bar
+                    Rectangle()
+                        .fill(sideBarDividerColor)
+                        .frame(height: 1.5)
+                    
+                    //Navigation Stack
+                    NavigationStack(path: $viewModel.navigationPath) {
+                        Color.green
+                            .navigationBarBackButtonHidden(true)
+                            .navigationDestination(for: NavigationDestination.self) { destination in
+                                // Instantiate the view here with access to viewModel
+                                switch destination {
+                                case .dashboard: Color.green
+                                case .jobEntry: JobEntryView(geometryProxy: proxy)
+                                case .jobListings: ListJobsView()
+                                case .statistics: Color.orange
+                                case .calendar: Color.purple
+                                case .documents: Color.blue
+                                }
+                            }
+                    }
                 }
-                .frame(minWidth: 450, minHeight: 350)
-
+                
             }
+            .frame(minWidth: 450, minHeight: 450)
         }
         .onTapGesture { isSearchFieldFocused = false }
     }
-}
-
-
-//MARK: - Navigation Destination (Better than String-based routing)
-enum NavigationDestination: Hashable {
-    case dashboard
-    case jobEntry
-    case jobListings
-    case statistics
-    case calendar
-    case documents
     
-    @ViewBuilder
-    var view: some View {
-        switch self {
-        case .dashboard:
-            Color.green
-        case .jobEntry:
-            JobEntryView()
-        case .jobListings:
-            ListJobsView()
-        case .statistics:
-            Color.orange // Placeholder
-        case .calendar:
-            Color.purple // Placeholder
-        case .documents:
-            Color.blue // Placeholder
-        }
+    enum NavigationDestination: Hashable {
+        case dashboard
+        case jobEntry
+        case jobListings
+        case statistics
+        case calendar
+        case documents
     }
+    
 }
 
 
@@ -140,7 +134,7 @@ enum SidebarItem: String, CaseIterable {
         }
     }
     
-    var destination: NavigationDestination {
+    var destination: HomeView.NavigationDestination {
         switch self {
         case .dashboard: return .dashboard
         case .jobListings: return .jobListings
@@ -220,88 +214,6 @@ struct SidebarItemView: View {
 }
 
 
-//MARK: - Top Bar
-struct DashboardTopBarView: View {
-    @Binding var searchText: String
-    @Binding var navigationPath: [NavigationDestination]
-    @FocusState.Binding var isSearchFieldFocused: Bool
-    let onSettingsTapped: () -> Void
-    let onBackTapped: () -> Void
-    
-    private var showBackButton: Bool {
-        !navigationPath.isEmpty && navigationPath.last == .jobEntry
-    }
-
-    var body: some View {
-        HStack(spacing: 8) {
-            
-            Spacer()
-                .frame(width: 20)
-            
-            //Back Button
-            if showBackButton {
-                Button(action: onBackTapped) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 22))
-                        .foregroundColor(.gray)
-                        .padding(15)
-                        .background(Color.clear.contentShape(Rectangle()))
-                        .frame(width: 45, height: 45)
-                }
-                .padding(.leading, -18)
-                .transition(.opacity)
-            }
-            //Search Field
-            else {
-                TextField("Search jobs, companies...", text: $searchText)
-                    .font(.title3)
-                    .foregroundColor(.gray)
-                    .padding(.leading, 44)
-                    .padding(.trailing, 16)
-                    .frame(height: 48)
-                    .background(Color.clear)
-                    .cornerRadius(8)
-                    .containerRelativeFrame(.horizontal, { length, _ in return length / 4 })
-                    .textFieldStyle(.plain)
-                    .focusable(false)
-                    .focused($isSearchFieldFocused)
-                    .alignmentGuide(.firstTextBaseline, computeValue: { _ in 10})
-                    .overlay(
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.gray)
-                                .font(.system(size: 18))
-                                .padding(.leading, 14)
-                                .padding(.bottom, 2)
-                            Spacer()
-                        })
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
-                    .transition(.opacity)
-            }
-            
-            Spacer()
-            
-            Button(action: onSettingsTapped) {
-                Text("JE")
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundColor(Color.white)
-            }
-            .frame(width: 45, height: 45)
-            .background(Color.blue)
-            .cornerRadius(25)
-            .padding(.trailing, 30)
-        }
-        .frame(height: 70)
-        .background(Color.white)
-        .buttonStyle(.plain)
-        .animation(.easeInOut(duration: 0.25), value: navigationPath)
-    }
-}
-
-
 //MARK: - ViewModel
 extension HomeView {
     
@@ -342,7 +254,6 @@ extension HomeView {
             navigationPath.append(.jobEntry)
         }
         
-        // MARK: - Private Helpers
         private func showAddJobButton() {
             withAnimation(.spring(response: 0.5)) {
                 shouldShowAddJobButton = true

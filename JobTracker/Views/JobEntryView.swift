@@ -26,59 +26,55 @@ struct JobEntryView: View {
     @State private var isEditing: Bool = false
     @State var expandedPickerId: String?
     @State var showTooltip: Bool = false
-
+    
+    let geometryProxy: GeometryProxy
+    private var isCompact: Bool { return geometryProxy.size.width < 900 }
+    
     var body: some View {
-        GeometryReader { proxy in
-            let isWide = proxy.size.width >= 900
-            ScrollView {
-                Group {
-                    if isWide {
-                        //MARK: - Horizontal Layout
-                        HStack(alignment: .top, spacing: 0) {
-                            LazyVStack {
-                                infoBody
-                                    .zIndex(1000)
-                                
-                                Spacer()
-                                
-                                LargeStylizedButton(action: addJobButtonPressed,
-                                                    imageName: "plus", title: "Add Job", isVisible: true)
-                                .padding(.horizontal, 12)
-                                .padding(.top, 70)
-                            }
-                            .frame(maxWidth: 600)
-                            
-                            webPreview
-                                .padding(.trailing, 24)
-                        }
-                        
-                    } else {
-                        //MARK: - Vertical Layout
-                        LazyVStack(alignment: .leading, spacing: -10) {
+        
+        ScrollView {
+            Group {
+                if !isCompact {
+                    //MARK: - Horizontal Layout
+                    HStack(alignment: .top, spacing: 0) {
+                        LazyVStack {
                             infoBody
                                 .zIndex(1000)
                             
+                            Spacer()
+                            
                             LargeStylizedButton(action: addJobButtonPressed,
                                                 imageName: "plus", title: "Add Job", isVisible: true)
-                            .padding(.horizontal, 10)
-                            
-                            webPreview
-                                .padding(.bottom, 50)
+                            .padding(.horizontal, 12)
+                            .padding(.top, 70)
                         }
-
+                        .frame(maxWidth: 600)
+                        
+                        webPreview
+                            .padding(.trailing, 24)
+                    }
+                    
+                } else {
+                    //MARK: - Vertical Layout
+                    LazyVStack(alignment: .leading, spacing: -10) {
+                        infoBody
+                            .zIndex(1000)
+                        
+                        webPreview
+                            .padding(.bottom, 50)
                     }
                 }
-                .id(isWide)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.25), value: isWide)
             }
-            .background(Color.white)
-            .onTapGesture {
-                isEditing = false
-                expandedPickerId = nil
-                showTooltip = false
-            }
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.25), value: isCompact)
         }
+        .background(Color.white)
+        .onTapGesture {
+            isEditing = false
+            expandedPickerId = nil
+            showTooltip = false
+        }
+        
     }
     
     
@@ -356,8 +352,9 @@ extension JobEntryView {
 
 #Preview {
     
-    JobEntryView()
-        .frame(width: 900, height: 800)
+    GeometryReader { proxy in
+        JobEntryView(geometryProxy: proxy)
+    }.frame(width: 900, height: 800)
     
 }
 

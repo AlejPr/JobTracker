@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A910542A2F3C8813009AC6D0 /* TODO.md in Sources */ = {isa = PBXBuildFile; fileRef = A91054292F3C880D009AC6D0 /* TODO.md */; };
 		A9F354AD2F38428E004BF7A6 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = A9F354AB2F384289004BF7A6 /* README.md */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		A91054292F3C880D009AC6D0 /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		A9DF33592F2E6CA9003A7011 /* JobTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JobTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9DF33682F2E6CAA003A7011 /* JobTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JobTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9DF33722F2E6CAA003A7011 /* JobTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JobTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				A9F354AB2F384289004BF7A6 /* README.md */,
+				A91054292F3C880D009AC6D0 /* TODO.md */,
 				A9DF335B2F2E6CA9003A7011 /* JobTracker */,
 				A9DF336B2F2E6CAA003A7011 /* JobTrackerTests */,
 				A9DF33752F2E6CAA003A7011 /* JobTrackerUITests */,
@@ -242,6 +245,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A910542A2F3C8813009AC6D0 /* TODO.md in Sources */,
 				A9F354AD2F38428E004BF7A6 /* README.md in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
