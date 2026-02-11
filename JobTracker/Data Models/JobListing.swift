@@ -18,7 +18,7 @@ final class JobListing: Identifiable, Hashable {
     var workLocationType: WorkLocationType?
     var salaryType: SalaryType?
     var jobURL: URL
-    var applicationStatus: JobApplicationStatus
+    var applicationStatus: ApplicationStatus
     
     init(title: String, company: String, location: String? = nil, jobURL: URL, payRange: String? = nil, schedule: String? = nil, workLocationType: WorkLocationType? = nil, salaryType: SalaryType? = nil, date: Date = Date()) {
         self.title = title
@@ -37,7 +37,7 @@ final class JobListing: Identifiable, Hashable {
 
 extension JobListing {
     
-    enum JobApplicationStatus: String, Codable {
+    enum ApplicationStatus: String, Codable {
         case applied = "Applied",
              rejected = "Rejected",
              ghosted = "Ghosted",
@@ -150,3 +150,4 @@ extension JobListing {
 
 typealias WorkLocationType = JobListing.WorkLocationType
 typealias SalaryType = JobListing.SalaryType
+typealias ApplicationStatus = JobListing.ApplicationStatus

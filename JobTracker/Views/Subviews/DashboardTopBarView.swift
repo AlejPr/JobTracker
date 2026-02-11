@@ -20,8 +20,7 @@ struct DashboardTopBarView: View {
     
     private var schema: DashboardTopBarViewSchema {
         if navigationPath.last == .jobEntry {
-            if isCompact { return .backButtonWithJobEntryButton }
-            return .backButton
+            return .backButtonWithJobEntryButton
         }
         return .searchField
     }
@@ -72,6 +71,7 @@ struct DashboardTopBarView: View {
         .background(Color.white)
         .buttonStyle(.plain)
         .animation(.easeInOut(duration: 0.25), value: navigationPath)
+        .animation(.easeInOut(duration: 0.25), value: schema)
     }
     
     

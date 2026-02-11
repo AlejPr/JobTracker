@@ -23,8 +23,9 @@ struct JobEntryView: View {
                 if !isCompact { horizontalLayout }
                 else { verticalLayout }
             }
+            .frame(minHeight: geometryProxy.size.height - 70)
             .transition(.opacity)
-            .animation(.easeInOut(duration: 0.25), value: isCompact)
+            .animation(.easeInOut(duration: 0.25), value: isCompactWidth)
         }
         .background(Color.white)
         .onTapGesture { viewModel.dismissOverlays() }
@@ -37,25 +38,18 @@ struct JobEntryView: View {
                 infoBody
                     .zIndex(1000)
                 
-                Spacer()
-                
-                AddJobButton(
-                    isEnabled: viewModel.canSaveJob,
-                    action: viewModel.addJobButtonPressed
-                )
-                .padding(.horizontal, 12)
-                .padding(.top, 70)
             }
             .frame(maxWidth: 600)
             
             webPreview
                 .padding(.trailing, 24)
+                .padding(.bottom, 50)
         }
     }
     
     
     private var verticalLayout: some View {
-        LazyVStack(alignment: .leading, spacing: -10) {
+        LazyVStack(alignment: .leading, spacing: -20) {
             infoBody
                 .zIndex(1000)
             
@@ -101,12 +95,30 @@ struct JobEntryView: View {
                 textFieldText: $viewModel.jobTitle
             )
             
-            LabeledTextField(
-                header: "Company Name",
-                placeHolderText: "Apple Inc.",
-                required: true,
-                textFieldText: $viewModel.companyName
-            )
+            
+            HStack(alignment: .bottom, spacing: 20) {
+                LabeledTextField(
+                    header: "Company Name",
+                    placeHolderText: "Apple Inc.",
+                    required: true,
+                    textFieldText: $viewModel.companyName
+                )
+                
+                CustomPickerView(
+                    options: [ApplicationStatus.applied, ApplicationStatus.saved, ApplicationStatus.emailed],
+                    displayName: { $0.rawValue },
+                    selection: $viewModel.applicationStatus,
+                    backgroundColor: sideBarColor,
+                    borderColor: sideBarDividerColor,
+                    textColor: Color.black,
+                    padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
+                    expandedPickerId: $viewModel.expandedPickerId,
+                    pickerId: "ApplicationStatusTypePickerID"
+                )
+                .frame(maxWidth: 120)
+                
+            }
+            .zIndex(1100)
             
             HStack(alignment: .bottom, spacing: 20) {
                 LabeledTextField(
@@ -170,7 +182,8 @@ struct JobEntryView: View {
             
             Spacer()
         }
-        .padding(24)
+        .padding(.horizontal, 24)
+        .padding(.top, 24)
         .background(Color.white)
     }
     
@@ -196,9 +209,10 @@ struct JobEntryView: View {
             }
             .padding(.top, 8)
             .opacity(viewModel.listingLink.isEmpty ? 0 : 1)
+            .animation(.easeInOut(duration: 0.2), value: viewModel.listingLink)
             .zIndex(1000)
             .overlay {
-                if viewModel.showTooltip {
+                if viewModel.showTooltip && !viewModel.listingLink.isEmpty {
                     GeometryReader { geometry in
                         HelpTooltip()
                             .position(x: 0, y: (geometry.size.height / 2) + 12)
@@ -209,7 +223,7 @@ struct JobEntryView: View {
 
             Color.gray
                 .cornerRadius(12)
-                .frame(minHeight: 700)
+                .frame(minHeight: 400)
                 .padding(.leading, 8)
             // JobListingPreview(urlString: viewModel.listingLink)
         }
@@ -234,6 +248,7 @@ extension JobEntryView {
         @Published var listingLink: String = ""
         @Published var jobTitle: String = ""
         @Published var companyName: String = ""
+        @Published var applicationStatus: ApplicationStatus = .applied
         @Published var location: String = ""
         @Published var workLocationType: WorkLocationType = .onSite
         @Published var salaryRange: String = ""
@@ -255,12 +270,16 @@ extension JobEntryView {
         }
         
         func toggleTooltip() {
-            showTooltip.toggle()
+            withAnimation(.easeInOut(duration: 0.25)) {
+                showTooltip.toggle()
+            }
         }
         
         func dismissOverlays() {
-            expandedPickerId = nil
-            showTooltip = false
+            withAnimation(.easeInOut(duration: 0.25)) {
+                expandedPickerId = nil
+                showTooltip = false
+            }
         }
     }
     
