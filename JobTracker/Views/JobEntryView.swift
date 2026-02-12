@@ -25,7 +25,7 @@ struct JobEntryView: View {
             }
             .frame(minHeight: geometryProxy.size.height - 70)
             .transition(.opacity)
-            .animation(.easeInOut(duration: 0.25), value: isCompactWidth)
+            .animation(.easeInOut(duration: 0.25), value: isCompact)
         }
         .background(Color.white)
         .onTapGesture { viewModel.dismissOverlays() }
@@ -221,11 +221,14 @@ struct JobEntryView: View {
                 }
             }
 
+            /*
             Color.gray
                 .cornerRadius(12)
                 .frame(minHeight: 400)
                 .padding(.leading, 8)
             // JobListingPreview(urlString: viewModel.listingLink)
+             */
+            LinkSnapshotView(pageURL: viewModel.webLink)
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
@@ -263,6 +266,7 @@ extension JobEntryView {
         @Published var showTooltip: Bool = false
         
         var canSaveJob: Bool { !jobTitle.isEmpty && !companyName.isEmpty }
+        var webLink: URL? { URL(string: listingLink) }
                 
         func addJobButtonPressed() {
             guard canSaveJob else { return }

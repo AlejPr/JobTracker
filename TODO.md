@@ -10,3 +10,4 @@
  - Fix JobEntryView animations up
  
 - !!Update NavigationRequestObserver tried to update multiple times per frame. ?
+- Resizing the view sometimes bleaches out the macos top bar?
