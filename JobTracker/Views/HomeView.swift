@@ -77,7 +77,6 @@ struct HomeView: View {
                         Color.green
                             .navigationBarBackButtonHidden(true)
                             .navigationDestination(for: NavigationDestination.self) { destination in
-                                // Instantiate the view here with access to viewModel
                                 switch destination {
                                 case .dashboard: Color.green
                                 case .jobEntry: JobEntryView(geometryProxy: proxy)

@@ -208,11 +208,11 @@ struct JobEntryView: View {
                 }
             }
             .padding(.top, 8)
-            .opacity(viewModel.listingLink.isEmpty ? 0 : 1)
+            .opacity(isValidUrl(url: viewModel.listingLink) ? 1 : 0)
             .animation(.easeInOut(duration: 0.2), value: viewModel.listingLink)
             .zIndex(1000)
             .overlay {
-                if viewModel.showTooltip && !viewModel.listingLink.isEmpty {
+                if viewModel.showTooltip {
                     GeometryReader { geometry in
                         HelpTooltip()
                             .position(x: 0, y: (geometry.size.height / 2) + 12)
@@ -221,14 +221,9 @@ struct JobEntryView: View {
                 }
             }
 
-            /*
-            Color.gray
-                .cornerRadius(12)
-                .frame(minHeight: 400)
-                .padding(.leading, 8)
-            // JobListingPreview(urlString: viewModel.listingLink)
-             */
-            LinkSnapshotView(pageURL: viewModel.webLink)
+            LinkSnapshotView(currentURLString: $viewModel.listingLink)
+                .background(Color.white)
+            
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
@@ -266,7 +261,6 @@ extension JobEntryView {
         @Published var showTooltip: Bool = false
         
         var canSaveJob: Bool { !jobTitle.isEmpty && !companyName.isEmpty }
-        var webLink: URL? { URL(string: listingLink) }
                 
         func addJobButtonPressed() {
             guard canSaveJob else { return }

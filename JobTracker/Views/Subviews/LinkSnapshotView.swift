@@ -5,14 +5,16 @@
 
 import SwiftUI
 import WebKit
+import Combine
 
 struct LinkSnapshotView: View {
     
-    var pageURL: URL?
+    @Binding var currentURLString: String
+    @StateObject private var viewModel = ViewModel()
     
     var body: some View {
         Group {
-            if pageURL != nil { webSnapshotView }
+            if viewModel.currentURL != nil { webSnapshotView }
             else { emptyView }
         }
         .cornerRadius(12)
@@ -20,11 +22,20 @@ struct LinkSnapshotView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(sideBarDividerColor, lineWidth: 2)
         )
+        .frame(minHeight: 600)
+        
+        //Update urlString in viewModel
+        .onChange(of: currentURLString, { _, newValue in
+            viewModel.updateURL(newValue)
+        })
+        .onAppear(perform: {
+            viewModel.updateURL(currentURLString)
+        })
     }
     
     
     private var webSnapshotView: some View {
-        WebView(url: pageURL)
+        CustomWebView(listingURL: $viewModel.currentURL)
     }
     
     
@@ -50,12 +61,70 @@ struct LinkSnapshotView: View {
     
 }
 
+
+extension LinkSnapshotView {
+    
+    struct CustomWebView: NSViewRepresentable {
+        @Binding var listingURL: URL?
+        
+        func makeNSView(context: Context) -> WKWebView {
+            let config = WKWebViewConfiguration()
+            let preferences = WKWebpagePreferences()
+            preferences.allowsContentJavaScript = true
+            config.defaultWebpagePreferences = preferences
+            
+            let webView = WKWebView(frame: .zero, configuration: config)
+            webView.allowsMagnification = true
+            webView.allowsBackForwardNavigationGestures = true
+                        
+            webView.load(URLRequest(url: listingURL!))
+            return webView
+        }
+        
+        func updateNSView(_ nsView: WKWebView, context: Context) {
+        }
+        
+    }
+    
+}
+
+
+//MARK: - View Model
+extension LinkSnapshotView {
+    
+    @MainActor
+    final class ViewModel: ObservableObject {
+        
+        @Published var currentURL: URL? = nil
+        @Published var currentImage: NSImage? = nil
+        @Published var fetchError: String? = nil
+        
+        func updateURL(_ newURLString: String) {
+            let trimmed = newURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+            currentURL = isValidUrl(url: trimmed) ? URL(string: trimmed) : nil
+
+        }
+        
+    }
+    
+}
+
+
+
+
 #Preview {
     
-    let google = URL(string: "https://www.google.com")
-    let apple = URL(string: "https://www.apple.org")
-    
-    LinkSnapshotView(pageURL: google)
-        .frame(width: 400, height: 700)
+    PreviewStruct()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white)
 }
+
+fileprivate struct PreviewStruct: View {
+    static let google = "https://www.google.com"
+    static let apple = "https://www.apple.org"
+    @State var pageString = Self.google
+    
+    var body: some View { LinkSnapshotView(currentURLString: $pageString) }
+    
+}
+
