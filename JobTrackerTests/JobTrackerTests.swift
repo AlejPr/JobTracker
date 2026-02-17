@@ -3,6 +3,7 @@
 //  JobTrackerTests
 //
 
+import Foundation
 import Testing
 @testable import JobTracker
 

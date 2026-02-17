@@ -9,8 +9,9 @@ import Combine
 
 struct LinkSnapshotView: View {
     
-    @Binding var currentURLString: String
     @StateObject private var viewModel = ViewModel()
+    @State var currentWebpageZoom: CGFloat = 1.0
+    @Binding var currentURLString: String
     
     var body: some View {
         Group {
@@ -33,9 +34,19 @@ struct LinkSnapshotView: View {
         })
     }
     
-    
     private var webSnapshotView: some View {
-        CustomWebView(listingURL: $viewModel.currentURL)
+        ZStack(alignment: .topTrailing) {
+            CustomWebView(currentWebpageZoom: $currentWebpageZoom, listingURL: $viewModel.currentURL)
+            
+            WebViewZoomControls (
+                onZoomIn: { currentWebpageZoom = min(currentWebpageZoom + 0.15, 3.0) },
+                onZoomOut: { currentWebpageZoom = max(currentWebpageZoom - 0.15, 0.5) }
+            )
+                .frame(height: 45)
+                .padding(.top, 12)
+                .padding(.trailing, 22)
+                .zIndex(1000)
+        }
     }
     
     
@@ -62,9 +73,13 @@ struct LinkSnapshotView: View {
 }
 
 
+//MARK: - Webview
 extension LinkSnapshotView {
     
     struct CustomWebView: NSViewRepresentable {
+        
+        @State var currentWebView: WKWebView?
+        @Binding var currentWebpageZoom: CGFloat
         @Binding var listingURL: URL?
         
         func makeNSView(context: Context) -> WKWebView {
@@ -76,14 +91,70 @@ extension LinkSnapshotView {
             let webView = WKWebView(frame: .zero, configuration: config)
             webView.allowsMagnification = true
             webView.allowsBackForwardNavigationGestures = true
-                        
+            
             webView.load(URLRequest(url: listingURL!))
+            DispatchQueue.main.async { self.currentWebView = webView }
             return webView
         }
         
         func updateNSView(_ nsView: WKWebView, context: Context) {
+            if let url = listingURL, nsView.url != url {
+                nsView.load(URLRequest(url: url))
+            }
+            
+            if nsView.pageZoom != currentWebpageZoom {
+                zoomWithAnimation(nsView, to: currentWebpageZoom)
+            }
         }
         
+        //TODO: - Fix this shit
+        private func zoomWithAnimation(_ webView: WKWebView, to newZoom: CGFloat) {
+//            NSAnimationContext.runAnimationGroup { context in
+//                context.duration = 0.3
+//                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+//                webView.animator().pageZoom = newZoom
+//            }
+            webView.pageZoom = newZoom
+        }
+        
+    }
+    
+    struct WebViewZoomControls: View {
+        let onZoomIn: () -> Void
+        let onZoomOut: () -> Void
+        
+        var body: some View {
+            HStack(spacing: 0) {
+                Button(action: onZoomOut) {
+                    Image(systemName: "minus.magnifyingglass")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(Color.gray)
+                        .frame(width: 44, height: 36)
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+                
+                Rectangle()
+                    .fill(sideBarDividerColor)
+                    .frame(width: 2)
+                
+                Button(action: onZoomIn) {
+                    Image(systemName: "plus.magnifyingglass")
+                        .font(.system(size: 16, weight: .medium))
+                        .frame(width: 44, height: 36)
+                        .foregroundStyle(Color.gray)
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+            }
+            .background(Color.white)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(sideBarDividerColor, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 2)
+        }
     }
     
 }
@@ -115,16 +186,19 @@ extension LinkSnapshotView {
 #Preview {
     
     PreviewStruct()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: 800, height: 600)
         .background(Color.white)
 }
+
 
 fileprivate struct PreviewStruct: View {
     static let google = "https://www.google.com"
     static let apple = "https://www.apple.org"
     @State var pageString = Self.google
     
-    var body: some View { LinkSnapshotView(currentURLString: $pageString) }
+    var body: some View {
+        LinkSnapshotView(currentURLString: $pageString)
+    }
     
 }
 
