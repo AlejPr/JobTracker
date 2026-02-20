@@ -8,19 +8,21 @@ import Foundation
 import SwiftData
 
 @Model
-final class JobListing: Identifiable, Hashable {
+final class JobListing: Identifiable, Hashable, CustomStringConvertible {
+    
     var title: String
     var company: String
     var timeStampApplied: Date
+    var jobURL: URL?
     var location: String?
     var payRange: String?
     var schedule: String?
+    var notes: String?
     var workLocationType: WorkLocationType?
     var salaryType: SalaryType?
-    var jobURL: URL
     var applicationStatus: ApplicationStatus
     
-    init(title: String, company: String, location: String? = nil, jobURL: URL, payRange: String? = nil, schedule: String? = nil, workLocationType: WorkLocationType? = nil, salaryType: SalaryType? = nil, date: Date = Date()) {
+    init(title: String, company: String, location: String? = nil, jobURL: URL?, payRange: String? = nil, schedule: String? = nil, notes: String? = nil, workLocationType: WorkLocationType? = nil, salaryType: SalaryType? = nil, date: Date = Date(), applicationStatus: ApplicationStatus = .applied) {
         self.title = title
         self.company = company
         self.timeStampApplied = date
@@ -30,8 +32,11 @@ final class JobListing: Identifiable, Hashable {
         self.schedule = schedule
         self.workLocationType = workLocationType
         self.salaryType = salaryType
-        self.applicationStatus = .applied
+        self.applicationStatus = applicationStatus
+        self.notes = notes
     }
+    
+    var description: String { return "Joblisting for role \(title) at \(company)."}
     
 }
 
