@@ -8,13 +8,18 @@ import SwiftUI
 
 //MARK: - Top Bar
 struct DashboardTopBarView: View {
+    
     @Binding var searchText: String
     @Binding var navigationPath: [HomeView.NavigationDestination]
+    
+    @Binding var addJobButtonEnabled: Bool
+    @Binding var addJobButtonPressed: Bool
+    
     @FocusState.Binding var isSearchFieldFocused: Bool
+    
     let geometryProxy: GeometryProxy
     let onSettingsTapped: () -> Void
     let onBackTapped: () -> Void
-    let addJobEntryTapped: () -> Void
     
     private var isCompact: Bool { return geometryProxy.size.width < 900 }
     
@@ -45,8 +50,12 @@ struct DashboardTopBarView: View {
                 .transition(.opacity)
                 
                 if schema == .backButtonWithJobEntryButton {
-                    LargeStylizedButton(action: { },
-                                        imageName: "plus", title: "Add Job", isVisible: true)
+                    LargeStylizedButton(action: { addJobButtonPressed = true },
+                                        imageName: "plus",
+                                        title: "Add Job",
+                                        isVisible: true,
+                                        disabled: !addJobButtonEnabled
+                    )
                 }
                 
             }

@@ -12,9 +12,14 @@ import WebKit
 struct JobEntryView: View {
 
     @StateObject private var viewModel = ViewModel()
+    
+    @Binding var addJobButtonEnabled: Bool
+    @Binding var addJobButtonPressed: Bool
+    
     let geometryProxy: GeometryProxy
     
     private var isCompact: Bool { geometryProxy.size.width < 900 }
+    
     
     var body: some View {
         ScrollView {
@@ -29,6 +34,11 @@ struct JobEntryView: View {
         }
         .background(Color.white)
         .onTapGesture { viewModel.dismissOverlays() }
+        .onChange(of: addJobButtonPressed) { _, newValue in
+            guard newValue else { return }
+            viewModel.addJobButtonPressed()
+            addJobButtonPressed = false
+        }
     }
     
     
@@ -94,7 +104,9 @@ struct JobEntryView: View {
                 required: true,
                 textFieldText: $viewModel.jobTitle
             )
-            
+            .onChange(of: viewModel.jobTitle) { _, _ in
+                checkCanAddJob()
+            }
             
             HStack(alignment: .bottom, spacing: 20) {
                 LabeledTextField(
@@ -103,6 +115,9 @@ struct JobEntryView: View {
                     required: true,
                     textFieldText: $viewModel.companyName
                 )
+                .onChange(of: viewModel.companyName) { _, _ in
+                    checkCanAddJob()
+                }
                 
                 CustomPickerView(
                     options: [ApplicationStatus.applied, ApplicationStatus.saved, ApplicationStatus.emailed],
@@ -187,6 +202,12 @@ struct JobEntryView: View {
         .background(Color.white)
     }
     
+    private func checkCanAddJob() {
+        let newValue = !viewModel.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.jobTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard newValue != addJobButtonEnabled else { return }
+        withAnimation(.easeInOut(duration: 0.25)) { addJobButtonEnabled = newValue }
+    }
+    
     
     //MARK: - Web Preview
     var webPreview: some View {
@@ -229,11 +250,6 @@ struct JobEntryView: View {
         .padding(.top, 16)
     }
     
-    
-    private func addJobButtonPressed() {
-        return print("tapped!")
-    }
-    
 }
 
 
@@ -259,11 +275,19 @@ extension JobEntryView {
         
         @Published var expandedPickerId: String?
         @Published var showTooltip: Bool = false
-        
-        var canSaveJob: Bool { !jobTitle.isEmpty && !companyName.isEmpty }
-                
+                        
         func addJobButtonPressed() {
-            guard canSaveJob else { return }
+            let newJob = JobListing(
+                title: jobTitle,
+                company: companyName,
+                location: location,
+                jobURL: URL(string: listingLink),
+                payRange: salaryRange,
+                notes: notes,
+                workLocationType: workLocationType,
+                salaryType: salaryType,
+            )
+            
             print("Saving job: \(jobTitle) at \(companyName)")
         }
         
@@ -459,9 +483,21 @@ extension JobEntryView {
 //MARK: - Preview
 #Preview {
     
-    GeometryReader { proxy in
-        JobEntryView(geometryProxy: proxy)
-    }.frame(width: 900, height: 800)
+    PreviewStruct()
+    
+}
+
+
+fileprivate struct PreviewStruct: View {
+    @State var bool1: Bool = false
+    @State var bool2: Bool = false
+    
+    var body: some View {
+        GeometryReader { proxy in
+            JobEntryView(addJobButtonEnabled: $bool1, addJobButtonPressed: $bool2, geometryProxy: proxy)
+        }
+        .frame(width: 900, height: 800)
+    }
     
 }
 

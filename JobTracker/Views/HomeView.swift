@@ -60,11 +60,12 @@ struct HomeView: View {
                     DashboardTopBarView(
                         searchText: $viewModel.searchText,
                         navigationPath: $viewModel.navigationPath,
+                        addJobButtonEnabled: $viewModel.topbarAddJobButtonEnabled,
+                        addJobButtonPressed: $viewModel.topbarAddJobButtonPressed,
                         isSearchFieldFocused: $isSearchFieldFocused,
                         geometryProxy: proxy,
                         onSettingsTapped: viewModel.settingsTapped,
                         onBackTapped: viewModel.backButtonTapped,
-                        addJobEntryTapped: { }
                     )
                     
                     //Divider Bar
@@ -79,7 +80,10 @@ struct HomeView: View {
                             .navigationDestination(for: NavigationDestination.self) { destination in
                                 switch destination {
                                 case .dashboard: Color.green
-                                case .jobEntry: JobEntryView(geometryProxy: proxy)
+                                case .jobEntry:
+                                    JobEntryView(addJobButtonEnabled: $viewModel.topbarAddJobButtonEnabled,
+                                                 addJobButtonPressed: $viewModel.topbarAddJobButtonPressed,
+                                                 geometryProxy: proxy)
                                 case .jobListings: ListJobsView()
                                 case .statistics: Color.orange
                                 case .calendar: Color.purple
@@ -220,13 +224,15 @@ extension HomeView {
     
     @MainActor
     final class ViewModel: ObservableObject {
-        // MARK: - Published Properties
-        @Published var sideBarSelectedItem: SidebarItem = .dashboard
-        @Published var shouldShowAddJobButton: Bool = true
+        
         @Published var navigationPath: [NavigationDestination] = []
         @Published var searchText: String = ""
         
-        // MARK: - Actions
+        @Published var sideBarSelectedItem: SidebarItem = .dashboard
+        @Published var shouldShowAddJobButton: Bool = true
+        @Published var topbarAddJobButtonEnabled: Bool = false
+        @Published var topbarAddJobButtonPressed: Bool = false
+        
         func sideBarItemSelected() {
             // Clear navigation and go to selected sidebar item
             navigationPath = [sideBarSelectedItem.destination]
