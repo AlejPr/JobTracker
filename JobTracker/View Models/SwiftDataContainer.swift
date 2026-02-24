@@ -37,6 +37,15 @@ class SwiftDataContainer {
         }
     }
     
+    public func insertJobListing(_ listing: JobListing) throws {
+        context.insert(listing)
+        do {
+            try context.save()
+        } catch {
+            throw error
+        }
+    }
+    
 }
 
 

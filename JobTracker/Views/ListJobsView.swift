@@ -157,12 +157,14 @@ fileprivate struct JobListingView: View {
             .compactMap { $0 }
 
         return ForEach(items, id: \.self) { value in
-            Text(value)
-                .fontWeight(.light)
-                .foregroundStyle(.black)
-                .padding(5)
-                .background(value == jobListing.payRange ?  Color.blue.opacity(0.2) : Color.gray.opacity(0.1) )
-                .cornerRadius(5)
+            if !value.isEmpty {
+                Text(value)
+                    .fontWeight(.light)
+                    .foregroundStyle(.black)
+                    .padding(5)
+                    .background(value == jobListing.payRange ?  Color.blue.opacity(0.2) : Color.gray.opacity(0.1) )
+                    .cornerRadius(5)
+            } else { Color.clear }
         }
     }
 }

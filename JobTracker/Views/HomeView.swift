@@ -81,9 +81,12 @@ struct HomeView: View {
                                 switch destination {
                                 case .dashboard: Color.green
                                 case .jobEntry:
+                                                                        
                                     JobEntryView(addJobButtonEnabled: $viewModel.topbarAddJobButtonEnabled,
                                                  addJobButtonPressed: $viewModel.topbarAddJobButtonPressed,
                                                  geometryProxy: proxy)
+                                    .environment(\.customDismiss, viewModel.backButtonTapped)
+                                    
                                 case .jobListings: ListJobsView()
                                 case .statistics: Color.orange
                                 case .calendar: Color.purple
@@ -234,7 +237,6 @@ extension HomeView {
         @Published var topbarAddJobButtonPressed: Bool = false
         
         func sideBarItemSelected() {
-            // Clear navigation and go to selected sidebar item
             navigationPath = [sideBarSelectedItem.destination]
             showAddJobButton()
         }
@@ -281,3 +283,4 @@ extension HomeView {
     HomeView()
         .frame(width: 1000, height: 700)
 }
+
