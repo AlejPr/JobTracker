@@ -12,5 +12,6 @@
 - Resizing the view sometimes bleaches out the macos top bar?
 - Webview Zoom animation
 - Full time / part time info for job listing
-- Check if all job info is empty and center listing if so
+- search, sort and filter buttons
+- listjobview cells without attributes appear squeezed in small layouts
 

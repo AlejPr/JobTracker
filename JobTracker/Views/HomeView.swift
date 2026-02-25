@@ -8,6 +8,7 @@ import SwiftData
 import Combine
 
 private let minSidebarWidth: CGFloat = 230
+private let maxSidebarWidth: CGFloat = 375
 public let sideBarColor = Color(red: 248/255, green: 249/255, blue: 250/255).opacity(1)
 public let sideBarDividerColor = Color(red: 227/255, green: 229/255, blue: 233/255)
 
@@ -44,7 +45,7 @@ struct HomeView: View {
             .transition(.opacity)
             .containerRelativeFrame(.horizontal, { length, _ in
                 if (length / 5) < minSidebarWidth { return minSidebarWidth }
-                else { return length / 5 }
+                return min(length / 5, maxSidebarWidth)
             })
             
             //Fake Divider Bar
@@ -67,6 +68,7 @@ struct HomeView: View {
                         onSettingsTapped: viewModel.settingsTapped,
                         onBackTapped: viewModel.backButtonTapped,
                     )
+                    .zIndex(100)
                     
                     //Divider Bar
                     Rectangle()
