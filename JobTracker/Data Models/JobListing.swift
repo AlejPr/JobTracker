@@ -4,7 +4,7 @@
 //
 
 
-import Foundation
+import SwiftUI
 import SwiftData
 
 @Model
@@ -55,6 +55,20 @@ extension JobListing {
         var description: String {
             self.rawValue
         }
+        
+        var color: Color {
+            switch self {
+            case .applied: Color.blue.opacity(0.2)
+            case .rejected: Color.red.opacity(0.4)
+            case .ghosted: Color.gray.opacity(0.15)
+            case .interviewing: Color.purple.opacity(0.15)
+            case .offerPending: Color.yellow.opacity(0.15)
+            case .accepted: Color.green.opacity(0.15)
+            case .saved: Color.blue.opacity(0.2)
+            case .emailed: Color.blue.opacity(0.2)
+            }
+            
+        }
     }
     
     enum WorkLocationType: String, Codable, CaseIterable {
@@ -78,12 +92,12 @@ extension JobListing {
 extension JobListing {
     
     // Helper function to create dates safely
-    private static func makeDate(year: Int, month: Int, day: Int) -> Date {
+    private static func makeDate(year: Int, month: Int, day: Int, hour: Int) -> Date {
         var components = DateComponents()
         components.year = year
         components.month = month
         components.day = day
-        components.hour = 12 // Set to noon to avoid timezone issues
+        components.hour = hour
         return Calendar.current.date(from: components) ?? Date()
     }
     
@@ -93,7 +107,9 @@ extension JobListing {
             company: "Government",
             location: "Florida",
             jobURL: URL(string: "https://apple.com")!,
-            payRange: "$1k / mo"
+            payRange: "$1k",
+            salaryType: .monthly,
+            applicationStatus: .accepted
         ),
         JobListing(
             title: "Swift Software Engineer",
@@ -102,7 +118,8 @@ extension JobListing {
             jobURL: URL(string: "https://apple.com")!,
             payRange: "$150-200k",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 2, day: 1)
+            date: makeDate(year: 2026, month: 2, day: 1, hour: 11),
+            applicationStatus: .rejected
         ),
         JobListing(
             title: "Junior Backend Developer",
@@ -111,7 +128,15 @@ extension JobListing {
             jobURL: URL(string: "https://microsoft.com")!,
             payRange: "$120-180k",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 2, day: 1)
+            date: makeDate(year: 2026, month: 2, day: 1, hour: 12),
+            applicationStatus: .interviewing
+        ),
+        JobListing(
+            title: "Weird Job",
+            company: "Local Company",
+            jobURL: URL(string: "https://test.com")!,
+            date: makeDate(year: 2026, month: 2, day: 1, hour: 13),
+            applicationStatus: .applied
         ),
         JobListing(
             title: "UX Engineer, iOS, Google Search App",
@@ -120,7 +145,8 @@ extension JobListing {
             jobURL: URL(string: "https://google.com")!,
             payRange: "Not Provided",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 1, day: 15)
+            date: makeDate(year: 2026, month: 1, day: 15, hour: 11),
+            applicationStatus: .rejected
         ),
         JobListing(
             title: "iOS Engineer (Audible)",
@@ -129,7 +155,8 @@ extension JobListing {
             jobURL: URL(string: "https://amazon.com")!,
             payRange: "$140-180k",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 1, day: 15)
+            date: makeDate(year: 2026, month: 1, day: 15, hour: 12),
+            applicationStatus: .ghosted
         ),
         JobListing(
             title: "iOS Frameworks Engineer, Platform Privacy",
@@ -138,7 +165,8 @@ extension JobListing {
             jobURL: URL(string: "https://apple.com")!,
             payRange: "$120-180k",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 1, day: 15)
+            date: makeDate(year: 2026, month: 1, day: 15, hour: 13),
+            applicationStatus: .ghosted
         ),
         JobListing(
             title: "Wagie",
@@ -147,7 +175,8 @@ extension JobListing {
             jobURL: URL(string: "https://amazon.com")!,
             payRange: "$12/hr",
             schedule: "Suicidal",
-            date: makeDate(year: 2026, month: 1, day: 2)
+            date: makeDate(year: 2026, month: 1, day: 2, hour: 12),
+            applicationStatus: .offerPending
         )
     ]}
     
