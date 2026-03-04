@@ -12,6 +12,8 @@ import WebKit
 struct JobEntryView: View {
 
     @StateObject private var viewModel = ViewModel()
+    @Environment(SwiftDataContainer.self) private var dataContainer
+    @Environment(\.customDismiss) var dismiss
     
     @Binding var addJobButtonEnabled: Bool
     @Binding var addJobButtonPressed: Bool
@@ -34,11 +36,8 @@ struct JobEntryView: View {
         }
         .background(Color.white)
         .onTapGesture { viewModel.dismissOverlays() }
-        .onChange(of: addJobButtonPressed) { _, newValue in
-            guard newValue else { return }
-            viewModel.addJobButtonPressed()
-            addJobButtonPressed = false
-        }
+        .onAppear { addJobButtonEnabled = false }
+        .onChange(of: addJobButtonPressed) { _, newValue in addJobButtonPressed(newValue) }
     }
     
     
@@ -202,12 +201,6 @@ struct JobEntryView: View {
         .background(Color.white)
     }
     
-    private func checkCanAddJob() {
-        let newValue = !viewModel.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.jobTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        guard newValue != addJobButtonEnabled else { return }
-        withAnimation(.easeInOut(duration: 0.25)) { addJobButtonEnabled = newValue }
-    }
-    
     
     //MARK: - Web Preview
     var webPreview: some View {
@@ -250,6 +243,38 @@ struct JobEntryView: View {
         .padding(.top, 16)
     }
     
+    
+    //MARK: - State Functions
+    private func checkCanAddJob() {
+        let newValue = !viewModel.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.jobTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard newValue != addJobButtonEnabled else { return }
+        withAnimation(.easeInOut(duration: 0.25)) { addJobButtonEnabled = newValue }
+    }
+    
+    
+    private func addJobButtonPressed(_ newValue: Bool) {
+        guard newValue else { return }
+        withAnimation(.easeInOut(duration: 0.25), { addJobButtonEnabled = false })
+        
+        Task {
+            do {
+                try viewModel.saveNewListing(with: dataContainer)
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+                await MainActor.run {
+                    addJobButtonPressed = false
+                    dismiss()
+                }
+            } catch {
+                print("Error, could not save job listing! \(error)")
+                await MainActor.run {
+                    addJobButtonPressed = false
+                    withAnimation(.easeInOut(duration: 0.25), { addJobButtonEnabled = true })
+                }
+            }
+        }
+    }
+    
+    
 }
 
 
@@ -275,8 +300,9 @@ extension JobEntryView {
         
         @Published var expandedPickerId: String?
         @Published var showTooltip: Bool = false
-                        
-        func addJobButtonPressed() {
+        
+
+        func saveNewListing(with dataContainer: SwiftDataContainer) throws {
             let newJob = JobListing(
                 title: jobTitle,
                 company: companyName,
@@ -288,7 +314,8 @@ extension JobEntryView {
                 salaryType: salaryType,
             )
             
-            print("Saving job: \(jobTitle) at \(companyName)")
+            do { try dataContainer.insertJobListing(newJob) }
+            catch { throw error }
         }
         
         func toggleTooltip() {

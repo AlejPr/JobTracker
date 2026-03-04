@@ -8,6 +8,7 @@ import SwiftData
 import Combine
 
 private let minSidebarWidth: CGFloat = 230
+private let maxSidebarWidth: CGFloat = 375
 public let sideBarColor = Color(red: 248/255, green: 249/255, blue: 250/255).opacity(1)
 public let sideBarDividerColor = Color(red: 227/255, green: 229/255, blue: 233/255)
 
@@ -44,7 +45,7 @@ struct HomeView: View {
             .transition(.opacity)
             .containerRelativeFrame(.horizontal, { length, _ in
                 if (length / 5) < minSidebarWidth { return minSidebarWidth }
-                else { return length / 5 }
+                return min(length / 5, maxSidebarWidth)
             })
             
             //Fake Divider Bar
@@ -67,6 +68,7 @@ struct HomeView: View {
                         onSettingsTapped: viewModel.settingsTapped,
                         onBackTapped: viewModel.backButtonTapped,
                     )
+                    .zIndex(100)
                     
                     //Divider Bar
                     Rectangle()
@@ -81,9 +83,12 @@ struct HomeView: View {
                                 switch destination {
                                 case .dashboard: Color.green
                                 case .jobEntry:
+                                                                        
                                     JobEntryView(addJobButtonEnabled: $viewModel.topbarAddJobButtonEnabled,
                                                  addJobButtonPressed: $viewModel.topbarAddJobButtonPressed,
                                                  geometryProxy: proxy)
+                                    .environment(\.customDismiss, viewModel.backButtonTapped)
+                                    
                                 case .jobListings: ListJobsView()
                                 case .statistics: Color.orange
                                 case .calendar: Color.purple
@@ -234,7 +239,6 @@ extension HomeView {
         @Published var topbarAddJobButtonPressed: Bool = false
         
         func sideBarItemSelected() {
-            // Clear navigation and go to selected sidebar item
             navigationPath = [sideBarSelectedItem.destination]
             showAddJobButton()
         }
@@ -281,3 +285,4 @@ extension HomeView {
     HomeView()
         .frame(width: 1000, height: 700)
 }
+

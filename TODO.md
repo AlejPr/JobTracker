@@ -12,3 +12,9 @@
 - Resizing the view sometimes bleaches out the macos top bar?
 - Webview Zoom animation
 - Full time / part time info for job listing
+- search, sort and filter buttons
+- listjobview cells without attributes appear squeezed in small layouts
+
+- Star and pin listings: 
+-- Starred can be filtered
+-- Pinned always appear on top

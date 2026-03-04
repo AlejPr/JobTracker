@@ -61,7 +61,6 @@ struct ListJobsView: View {
         }
         
         if !curr.isEmpty { res.append(curr) }
-        //res.append(curr)
         return res
     }
     
@@ -98,45 +97,81 @@ fileprivate struct JobListingGroup: View {
 }
 
 
-//MARK: - Individual Rows
+//MARK: - Rows
 fileprivate struct JobListingView: View {
     
     var jobListing: JobListing
     
     var body: some View {
+        let attributes = calculateAttributes()
+        let showAttributes = !attributes.isEmpty
         
         Button { print("\(jobListing.title), \(jobListing.company)") }
         label: {
             HStack {
-                VStack {
-                    Text("\(jobListing.company.prefix(1))")
-                        .font(Font.system(size: 16, weight: .medium))
-                        .frame(width: 45, height: 45)
-                        .background(Color.blue)
-                        .cornerRadius(5)
-                        .padding(.leading, 20)
-                        .padding(.bottom, 30)
-                }
+                
+                //Image
+                let split = jobListing.company.split(separator: " ")
+                let companyAbbreviation: String = {
+                    if split.count > 1 { return "\(split[0].prefix(1).uppercased() + split[1].prefix(1).uppercased())" }
+                    return jobListing.company.prefix(2).uppercased()
+                }()
+                
+                Text(companyAbbreviation)
+                    .font(Font.system(size: 16, weight: .medium))
+                    .foregroundStyle(.blue)
+                    .frame(width: 45, height: 45)
+                    .background(Color.blue.opacity(0.2))
+                    .cornerRadius(5)
+                    .padding(.leading, 20)
+                    .padding(.bottom, showAttributes ? 30 : 0)
+                    .padding(.vertical, showAttributes ? 0 : 15)
                 
                 VStack(alignment: .leading, spacing: 5) {
                     
-                    Text("\(jobListing.title)")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.black)
-                    Text("\(jobListing.company)")
-                        .font(.title3)
-                        .foregroundStyle(.black)
-                    
-                    HStack {
-                        jobAttributes()
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            //Title Labels
+                            Text("\(jobListing.title)")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.black)
+                            Text("\(jobListing.company)")
+                                .font(.title3)
+                                .foregroundStyle(.black)
+                        }
+                        .padding(.vertical, showAttributes ? 0 : 15)
+                        
                     }
-                    .padding(.top, 5)
+                    
+                    if showAttributes {
+                        HStack { jobAttributes(attributes) }
+                        .padding(.top, 5)
+                    }
                     
                 }
                 .padding(.leading, 10)
                 
                 Spacer()
+                
+                
+                VStack(alignment: .trailing) {
+                    Text(jobListing.applicationStatus.rawValue)
+                        .fontWeight(.light)
+                        .foregroundStyle(.black)
+                        .padding(5)
+                        .background(jobListing.applicationStatus.color)
+                        .cornerRadius(5)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "ellipsis")
+                        .foregroundStyle(.blue)
+                        .font(Font.system(size: 20, weight: .medium))
+                        .padding(.trailing, 10)
+                }
+                .padding([.leading, .trailing], 10)
+                .padding(.bottom, 10)
                 
             }
             .padding(.vertical, 10)
@@ -152,19 +187,42 @@ fileprivate struct JobListingView: View {
         
     }
 
-    private func jobAttributes() -> some View {
-        let items: [String] = [jobListing.schedule, jobListing.location, jobListing.payRange]
+    
+    private func calculateAttributes() -> [(String, Color)] {
+        var items: [(String, Color)] = [jobListing.schedule, jobListing.location]
             .compactMap { $0 }
-
-        return ForEach(items, id: \.self) { value in
-            Text(value)
+            .map { ($0, Color.gray.opacity(0.1)) }
+        if let pay = jobListing.payRange {
+            items.append((formatPayRange(pay, jobListing.salaryType ?? .yearly), Color.blue.opacity(0.2)))
+        }
+        return items
+    }
+    
+    
+    private func jobAttributes(_ attributes: [(String, Color)]) -> some View {
+        return ForEach(attributes.indices, id: \.self) { index in
+            let value = attributes[index]
+            Text(value.0)
                 .fontWeight(.light)
                 .foregroundStyle(.black)
                 .padding(5)
-                .background(value == jobListing.payRange ?  Color.blue.opacity(0.2) : Color.gray.opacity(0.1) )
+                .background(value.1)
                 .cornerRadius(5)
         }
     }
+    
+    
+    private func formatPayRange(_ range: String,_ salaryType: SalaryType) -> String {
+        switch salaryType {
+        case .yearly: return range
+        case .monthly: return range + " / mo"
+        case .biWeekly: return range + " / bi-wkly"
+        case .weekly: return range + " / wk"
+        case .hourly: return range + " / hr"
+        }
+    }
+    
+    
 }
 
 
@@ -203,10 +261,11 @@ fileprivate let dateFormatter = CustomDateFormatter()
 #Preview {
     ListJobsView()
         .sampleContainer()
-        .frame(width: 500, height: 500)
+        .frame(width: 700, height: 500)
 }
 
 #Preview("No Listings") {
     ListJobsView()
         .modelContainer(for: [JobListing.self])
 }
+
