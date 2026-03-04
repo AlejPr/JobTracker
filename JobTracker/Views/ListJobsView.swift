@@ -171,7 +171,7 @@ fileprivate struct JobListingView: View {
                         .padding(.trailing, 10)
                 }
                 .padding([.leading, .trailing], 10)
-                .padding(.bottom, 7.5)
+                .padding(.bottom, 10)
                 
             }
             .padding(.vertical, 10)

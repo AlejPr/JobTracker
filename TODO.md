@@ -15,3 +15,6 @@
 - search, sort and filter buttons
 - listjobview cells without attributes appear squeezed in small layouts
 
+- Star and pin listings: 
+-- Starred can be filtered
+-- Pinned always appear on top
