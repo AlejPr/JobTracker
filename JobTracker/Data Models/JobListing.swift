@@ -118,6 +118,7 @@ extension JobListing {
             jobURL: URL(string: "https://apple.com")!,
             payRange: "$150-200k",
             schedule: "Full-Time",
+            notes: "REALLY want this job!!!!! Apple Campus is very beautiful.\nAlso 996 work schedule",
             date: makeDate(year: 2026, month: 2, day: 1, hour: 11),
             applicationStatus: .rejected
         ),

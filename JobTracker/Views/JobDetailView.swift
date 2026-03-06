@@ -9,13 +9,26 @@ import SwiftUI
 struct JobDetailView: View {
     
     var jobListing: JobListing
+    @State var listingString: String = ""
+    
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: jobListing.timeStampApplied)
+    }
     
     var body: some View {
-        infoView
+        HStack(alignment: .top, spacing: 25) {
+            infoView
+            
+            LinkSnapshotView(currentURLString: $listingString)
+                .frame(width: 350, height: 600)
+        }
     }
     
     var infoView: some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 let split = jobListing.company.split(separator: " ")
                 let companyAbbreviation: String = {
@@ -29,14 +42,11 @@ struct JobDetailView: View {
                     .frame(width: 80, height: 80)
                     .background(Color.blue.opacity(0.2))
                     .cornerRadius(10)
-                    .padding(.leading, 20)
-                
                 
                 LabeledAttribute(title: jobListing.title, text: jobListing.company,
                                  titleFont: .largeTitle.bold(), titleStyle: .black,
                                  textFont: .title)
                 .padding(.leading, 20)
-                .padding(.trailing, 10)
                 
             }
             .padding(.bottom, 15)
@@ -44,26 +54,45 @@ struct JobDetailView: View {
             HStack() {
                 
                 VStack(alignment: .leading, spacing: 15) {
-                    LabeledAttribute(title: "Applied", text: "Jan 10, 2026")
+                    LabeledAttribute(title: "Applied", text: formattedDate)
                     
-                    LabeledAttribute(title: "Location", text: jobListing.location ?? "Remote (US)")
+                    LabeledAttribute(title: "Location", text: jobListing.location ?? "Not Provided")
                 }
                 Spacer()
                 
                 VStack(alignment: .leading, spacing: 15) {
-                    LabeledAttribute(title: "Salary Range", text: jobListing.payRange ?? "$120k - $150k")
-
-
-                    LabeledAttribute(title: "Schedule", text: jobListing.schedule ?? "Full-Time")
+                    LabeledAttribute(
+                        title: "Salary Range",
+                        text: {
+                            guard let pay = jobListing.payRange else { return "Not Provided" }
+                            if let salaryType = jobListing.salaryType {
+                                return "\(pay) (\(salaryType.rawValue))"
+                            }
+                            return pay
+                        }()
+                    )
+                    
+                    LabeledAttribute(
+                        title: "Schedule",
+                        text: {
+                            var parts: [String] = []
+                            if let schedule = jobListing.schedule { parts.append(schedule) }
+                            if let workType = jobListing.workLocationType { parts.append(workType.rawValue) }
+                            return parts.isEmpty ? "Not Provided" : parts.joined(separator: " · ")
+                        }()
+                    )
                 }
-                .padding(.trailing, 25)
             }
-            .padding(.horizontal, 25)
-
+            
+            if let notes = jobListing.notes {
+                LabeledAttribute(title: "Notes", text: notes)
+                    .padding(.top, 10)
+                    .padding(.trailing, -35)
+            }
             
         }
+        .padding(.horizontal, 25)
         .padding(20)
-        .padding(.trailing, 25)
         .padding(.vertical, 10)
         .background(Color.white)
         .cornerRadius(10)
@@ -72,7 +101,7 @@ struct JobDetailView: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(sideBarDividerColor, lineWidth: 2)
         }
-        .frame(width: 500)
+        .frame(width: 450)
         
     }
     
@@ -89,11 +118,13 @@ struct JobDetailView: View {
                 Text(title)
                     .font(titleFont)
                     .foregroundStyle(titleStyle)
-                    .lineLimit(1)
+                    .lineLimit(title.count > 45 ? 2 : 1)
+                    .minimumScaleFactor(0.65)
+                    .scaleEffect(title.count > 45 ? 0.8 : 1, anchor: .leading)
                 Text(text)
                     .font(textFont)
                     .foregroundStyle(.black)
-                    .lineLimit(1)
+                    //.lineLimit(1)
             }
         }
     }
@@ -104,9 +135,9 @@ struct JobDetailView: View {
 
 #Preview {
     ZStack {
-        sideBarColor
+        Color.white
         
         JobDetailView(jobListing: JobListing.sampleData[1])
-            .frame(width: 700, height: 500)
+            .frame(width: 900, height: 700)
     }
 }
