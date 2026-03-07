@@ -27,6 +27,7 @@ struct DashboardTopBarView: View {
         switch navigationPath.last {
         case .jobEntry: .backButtonWithJobEntryButton
         case .jobListings: .searchFieldWithFilterAndSort
+        case .jobListing(_): .backButton
         default: .searchField
         }
     }

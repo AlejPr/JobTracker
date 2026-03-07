@@ -19,11 +19,14 @@ struct JobDetailView: View {
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: 25) {
-            infoView
-            
-            LinkSnapshotView(currentURLString: $listingString)
-                .frame(width: 350, height: 600)
+        ZStack {
+            Color.white
+            HStack(alignment: .top, spacing: 25) {
+                infoView
+                
+                LinkSnapshotView(currentURLString: $listingString)
+                    .frame(width: 350, height: 600)
+            }
         }
     }
     
@@ -134,10 +137,6 @@ struct JobDetailView: View {
 
 
 #Preview {
-    ZStack {
-        Color.white
-        
-        JobDetailView(jobListing: JobListing.sampleData[1])
-            .frame(width: 900, height: 700)
-    }
+    JobDetailView(jobListing: JobListing.sampleData[1])
+        .frame(width: 900, height: 700)
 }

@@ -60,7 +60,7 @@ struct HomeView: View {
                     
                     DashboardTopBarView(
                         searchText: $viewModel.searchText,
-                        navigationPath: $viewModel.navigationPath,
+                        navigationPath: $viewModel.navigationPathStack,
                         addJobButtonEnabled: $viewModel.topbarAddJobButtonEnabled,
                         addJobButtonPressed: $viewModel.topbarAddJobButtonPressed,
                         isSearchFieldFocused: $isSearchFieldFocused,
@@ -76,7 +76,8 @@ struct HomeView: View {
                         .frame(height: 2)
                     
                     //Navigation Stack
-                    NavigationStack(path: $viewModel.navigationPath) {
+                    NavigationStack(path: $viewModel.navigationPathStack) {
+                        
                         Color.green
                             .navigationBarBackButtonHidden(true)
                             .navigationDestination(for: NavigationDestination.self) { destination in
@@ -89,7 +90,14 @@ struct HomeView: View {
                                                  geometryProxy: proxy)
                                     .environment(\.customDismiss, viewModel.backButtonTapped)
                                     
-                                case .jobListings: ListJobsView()
+                                case .jobListings:
+                                    
+                                    ListJobsView(navigationPathStack: $viewModel.navigationPathStack)
+                                    
+                                case .jobListing(let listing):
+                                    
+                                    JobDetailView(jobListing: listing, listingString: "")
+                                    
                                 case .statistics: Color.orange
                                 case .calendar: Color.purple
                                 case .documents: Color.blue
@@ -111,6 +119,7 @@ struct HomeView: View {
         case statistics
         case calendar
         case documents
+        case jobListing(JobListing)
     }
     
 }
@@ -230,7 +239,7 @@ extension HomeView {
     @MainActor
     final class ViewModel: ObservableObject {
         
-        @Published var navigationPath: [NavigationDestination] = []
+        @Published var navigationPathStack: [NavigationDestination] = []
         @Published var searchText: String = ""
         
         @Published var sideBarSelectedItem: SidebarItem = .dashboard
@@ -239,7 +248,7 @@ extension HomeView {
         @Published var topbarAddJobButtonPressed: Bool = false
         
         func sideBarItemSelected() {
-            navigationPath = [sideBarSelectedItem.destination]
+            navigationPathStack = [sideBarSelectedItem.destination]
             showAddJobButton()
         }
         
@@ -249,20 +258,20 @@ extension HomeView {
         }
         
         func backButtonTapped() {
-            guard let last = navigationPath.last else { return }
+            guard let last = navigationPathStack.last else { return }
             
             switch last {
             case .jobEntry:
                 showAddJobButton()
-                navigationPath.removeLast()
+                navigationPathStack.removeLast()
             default:
-                navigationPath.removeLast()
+                _ = withAnimation { navigationPathStack.removeLast() }
             }
         }
         
         func addNewJobTapped() {
             hideAddJobButton()
-            navigationPath.append(.jobEntry)
+            navigationPathStack.append(.jobEntry)
         }
         
         private func showAddJobButton() {
@@ -278,6 +287,9 @@ extension HomeView {
         }
     }
 }
+
+
+typealias NavigationDestination = HomeView.NavigationDestination
 
 
 //MARK: - Preview

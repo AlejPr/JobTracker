@@ -9,6 +9,7 @@ import SwiftData
 struct ListJobsView: View {
     
     @Query(sort: \JobListing.timeStampApplied, order: .reverse) private var jobListings: [JobListing]
+    @Binding var navigationPathStack: [NavigationDestination]
     
     var body: some View {
         if !jobListings.isEmpty {
@@ -31,7 +32,12 @@ struct ListJobsView: View {
             
             let sortedListingGroups = groupJobListingsByDate(jobListings)
             ForEach(sortedListingGroups.indices, id: \.self) { groupIndex in
-                JobListingGroup(jobListings: sortedListingGroups[groupIndex])
+                JobListingGroup(
+                    jobListings: sortedListingGroups[groupIndex],
+                    jobListingTapped: { listing in
+                        withAnimation { navigationPathStack.append(.jobListing(listing)) }
+                    }
+                )
                     .padding(.bottom, 20)
             }
             
@@ -71,6 +77,7 @@ struct ListJobsView: View {
 fileprivate struct JobListingGroup: View {
     
     var jobListings: [JobListing]
+    var jobListingTapped: (JobListing) -> Void
     var thisWeek: Bool {
         jobListings.first!.timeStampApplied >= Date().addingTimeInterval(-604800)
     }
@@ -84,7 +91,10 @@ fileprivate struct JobListingGroup: View {
                 .padding(.leading, 30)
             
             ForEach(jobListings) { jobListing in
-                JobListingView(jobListing: jobListing)
+                JobListingView(
+                    jobListing: jobListing,
+                    tapped: jobListingTapped
+                )
             }
         }
         
@@ -101,12 +111,13 @@ fileprivate struct JobListingGroup: View {
 fileprivate struct JobListingView: View {
     
     var jobListing: JobListing
+    var tapped: (JobListing) -> Void
     
     var body: some View {
         let attributes = calculateAttributes()
         let showAttributes = !attributes.isEmpty
         
-        Button { print("\(jobListing.title), \(jobListing.company)") }
+        Button { tapped(jobListing) }
         label: {
             HStack {
                 
@@ -257,15 +268,29 @@ fileprivate class CustomDateFormatter: DateFormatter, @unchecked Sendable {
 
 fileprivate let dateFormatter = CustomDateFormatter()
 
+fileprivate struct PreviewStruct: View {
+    @State var test = [NavigationDestination]()
+    let empty: Bool
+    
+    var body: some View {
+        if !empty {
+            ListJobsView(navigationPathStack: $test)
+                .sampleContainer()
+                .frame(width: 700, height: 500)
+        }
+        else {
+            ListJobsView(navigationPathStack: $test)
+                .modelContainer(for: [JobListing.self])
+        }
+    }
+}
+
 
 #Preview {
-    ListJobsView()
-        .sampleContainer()
-        .frame(width: 700, height: 500)
+    PreviewStruct(empty: false)
 }
 
 #Preview("No Listings") {
-    ListJobsView()
-        .modelContainer(for: [JobListing.self])
+    PreviewStruct(empty: true)
 }
 
