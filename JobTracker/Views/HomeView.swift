@@ -96,7 +96,9 @@ struct HomeView: View {
                                     
                                 case .jobListing(let listing):
                                     
-                                    JobDetailView(jobListing: listing, listingString: "")
+                                    JobDetailView(listingString: "",
+                                                  jobListing: listing,
+                                                  geometryProxy: proxy)
                                     
                                 case .statistics: Color.orange
                                 case .calendar: Color.purple

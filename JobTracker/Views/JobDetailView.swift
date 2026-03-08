@@ -8,8 +8,11 @@ import SwiftUI
 
 struct JobDetailView: View {
     
-    var jobListing: JobListing
     @State var listingString: String = ""
+    var jobListing: JobListing
+    let geometryProxy: GeometryProxy
+    
+    private var isCompact: Bool { geometryProxy.size.width < 900 }
     
     private var formattedDate: String {
         let formatter = DateFormatter()
@@ -19,16 +22,46 @@ struct JobDetailView: View {
     }
     
     var body: some View {
-        ZStack {
-            Color.white
-            HStack(alignment: .top, spacing: 25) {
-                infoView
-                
-                LinkSnapshotView(currentURLString: $listingString)
-                    .frame(width: 350, height: 600)
+        ScrollView {
+            
+            Group {
+                if isCompact { verticalLayout }
+                else { horizontalLayout }
             }
+            //.frame(minHeight: geometryProxy.size.height - 70)
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.25), value: isCompact)
+        }
+        .background(Color.white)
+    }
+    
+    
+    var horizontalLayout: some View {
+        HStack(alignment: .top) {
+            infoView
+                .frame(minWidth: 300)
+                .padding(25)
+            
+            LinkSnapshotView(currentURLString: $listingString)
+                .frame(width: 350, height: 600)
+                .padding(25)
+                .padding(.leading, -25)
         }
     }
+    
+    
+    var verticalLayout: some View {
+        VStack(spacing: 20) {
+            infoView
+                .frame(minWidth: 300)
+                .padding([.horizontal, .top], 30)
+
+            LinkSnapshotView(currentURLString: $listingString)
+                .frame(width: 350, height: 600)
+        }
+        
+    }
+    
     
     var infoView: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -55,12 +88,12 @@ struct JobDetailView: View {
             .padding(.bottom, 15)
             
             HStack() {
-                
                 VStack(alignment: .leading, spacing: 15) {
                     LabeledAttribute(title: "Applied", text: formattedDate)
                     
                     LabeledAttribute(title: "Location", text: jobListing.location ?? "Not Provided")
                 }
+                
                 Spacer()
                 
                 VStack(alignment: .leading, spacing: 15) {
@@ -85,6 +118,8 @@ struct JobDetailView: View {
                         }()
                     )
                 }
+                
+                Spacer()
             }
             
             if let notes = jobListing.notes {
@@ -99,13 +134,11 @@ struct JobDetailView: View {
         .padding(.vertical, 10)
         .background(Color.white)
         .cornerRadius(10)
-        .shadow(color: .black.opacity(0.2), radius: 5)
+        .shadow(color: .black.opacity(0.2), radius: 3)
         .overlay {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(sideBarDividerColor, lineWidth: 2)
         }
-        .frame(width: 450)
-        
     }
     
     
@@ -137,6 +170,8 @@ struct JobDetailView: View {
 
 
 #Preview {
-    JobDetailView(jobListing: JobListing.sampleData[1])
-        .frame(width: 900, height: 700)
+    GeometryReader { proxy in
+        JobDetailView(jobListing: JobListing.sampleData[1], geometryProxy: proxy)
+    }
+    .frame(width: 900, height: 700)
 }
