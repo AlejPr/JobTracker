@@ -12,6 +12,8 @@ struct LinkSnapshotView: View {
     @StateObject private var viewModel = ViewModel()
     @State var currentWebpageZoom: CGFloat = 1.0
     @Binding var currentURLString: String
+    @Binding var isExpanded: Bool
+    let canExpand: Bool
     
     var body: some View {
         Group {
@@ -35,17 +37,26 @@ struct LinkSnapshotView: View {
     }
     
     private var webSnapshotView: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .top) {
             CustomWebView(currentWebpageZoom: $currentWebpageZoom, listingURL: $viewModel.currentURL)
             
-            WebViewZoomControls (
-                onZoomIn: { currentWebpageZoom = min(currentWebpageZoom + 0.15, 3.0) },
-                onZoomOut: { currentWebpageZoom = max(currentWebpageZoom - 0.15, 0.5) }
-            )
+            HStack {
+                if canExpand {
+                    WebViewExpansionButton(isExpanded: $isExpanded)
+                        .padding(.leading, -5)
+                }
+                
+                Spacer()
+                
+                WebViewZoomControls (
+                    onZoomIn: { currentWebpageZoom = min(currentWebpageZoom + 0.15, 3.0) },
+                    onZoomOut: { currentWebpageZoom = max(currentWebpageZoom - 0.15, 0.5) }
+                )
                 .frame(height: 45)
-                .padding(.top, 12)
-                .padding(.trailing, 22)
-                .zIndex(1000)
+            }
+            .padding(.top, 12)
+            .padding(.horizontal, 22)
+            .zIndex(1000)
         }
     }
     
@@ -119,6 +130,37 @@ extension LinkSnapshotView {
         
     }
     
+    struct WebViewExpansionButton: View {
+        
+        @Binding var isExpanded: Bool
+        
+        var body: some View {
+            Button {
+                withAnimation { isExpanded = !isExpanded }
+            }
+            label: {
+                ZStack {
+                    Color.white
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(Color.gray)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                }
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(sideBarDividerColor, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 2)
+        }
+        
+    }
+    
     struct WebViewZoomControls: View {
         let onZoomIn: () -> Void
         let onZoomOut: () -> Void
@@ -130,6 +172,7 @@ extension LinkSnapshotView {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(Color.gray)
                         .frame(width: 44, height: 36)
+                        .background(Color.white)
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
@@ -143,6 +186,7 @@ extension LinkSnapshotView {
                         .font(.system(size: 16, weight: .medium))
                         .frame(width: 44, height: 36)
                         .foregroundStyle(Color.gray)
+                        .background(Color.white)
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
@@ -195,9 +239,10 @@ fileprivate struct PreviewStruct: View {
     static let google = "https://www.google.com"
     static let apple = "https://www.apple.org"
     @State var pageString = Self.google
+    @State var isExpanded: Bool = false
     
     var body: some View {
-        LinkSnapshotView(currentURLString: $pageString)
+        LinkSnapshotView(currentURLString: $pageString, isExpanded: $isExpanded, canExpand: true)
     }
     
 }

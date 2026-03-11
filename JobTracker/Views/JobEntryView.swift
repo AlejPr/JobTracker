@@ -43,14 +43,13 @@ struct JobEntryView: View {
     
     private var horizontalLayout: some View {
         HStack(alignment: .top, spacing: 0) {
-            LazyVStack {
-                infoBody
-                    .zIndex(1000)
-                
+            if !viewModel.webViewIsExpanded {
+                LazyVStack { infoBody }
+                    .frame(maxWidth: 600)
             }
-            .frame(maxWidth: 600)
             
             webPreview
+                .padding(.leading, viewModel.webViewIsExpanded ? 24 : 0)
                 .padding(.trailing, 24)
                 .padding(.bottom, 50)
         }
@@ -194,11 +193,24 @@ struct JobEntryView: View {
                 textFieldText: $viewModel.notes
             )
             
+            LabeledTextField(
+                header: "Requirements",
+                placeHolderText: "3 Years of experience in SwiftUI",
+                axis: .vertical,
+                textFieldText: $viewModel.requirements
+            )
+            
+            LabeledTextField(
+                header: "Description",
+                placeHolderText: "Develop great applications for MacOS devices!",
+                axis: .vertical,
+                textFieldText: $viewModel.jobDescription
+            )
+            
             Spacer()
         }
         .padding(.horizontal, 24)
         .padding(.top, 24)
-        .background(Color.white)
     }
     
     
@@ -235,12 +247,13 @@ struct JobEntryView: View {
                 }
             }
 
-            LinkSnapshotView(currentURLString: $viewModel.listingLink)
-                .background(Color.white)
+            LinkSnapshotView(currentURLString: $viewModel.listingLink,
+                             isExpanded: $viewModel.webViewIsExpanded,
+                             canExpand: !isCompact)
             
         }
         .padding(.horizontal, 16)
-        .padding(.top, 16)
+        .padding(.top, 14)
     }
     
     
@@ -294,12 +307,15 @@ extension JobEntryView {
         @Published var salaryNotListed: Bool = false
         @Published var salaryType: SalaryType = .yearly
         @Published var notes: String = ""
+        @Published var requirements: String = ""
+        @Published var jobDescription: String = ""
         
         @Published var autofill: Bool = true
         @Published var saveWebPage: Bool = true
         
         @Published var expandedPickerId: String?
         @Published var showTooltip: Bool = false
+        @Published var webViewIsExpanded: Bool = false
         
 
         func saveNewListing(with dataContainer: SwiftDataContainer) throws {
@@ -310,6 +326,8 @@ extension JobEntryView {
                 jobURL: URL(string: listingLink),
                 payRange: salaryRange,
                 notes: notes,
+                requirements: requirements,
+                jobDescription: jobDescription,
                 workLocationType: workLocationType,
                 salaryType: salaryType,
             )
@@ -511,6 +529,8 @@ extension JobEntryView {
 #Preview {
     
     PreviewStruct()
+        .environment(\.customDismiss, { })
+        .sampleContainer()
     
 }
 
@@ -523,6 +543,8 @@ fileprivate struct PreviewStruct: View {
         GeometryReader { proxy in
             JobEntryView(addJobButtonEnabled: $bool1, addJobButtonPressed: $bool2, geometryProxy: proxy)
         }
+        .sampleContainer()
+        .environment(\.customDismiss, { })
         .frame(width: 900, height: 800)
     }
     

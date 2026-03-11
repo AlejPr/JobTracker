@@ -42,10 +42,6 @@ struct JobDetailView: View {
                 .frame(minWidth: 300)
                 .padding(25)
             
-            LinkSnapshotView(currentURLString: $listingString)
-                .frame(width: 350, height: 600)
-                .padding(25)
-                .padding(.leading, -25)
         }
     }
     
@@ -56,8 +52,6 @@ struct JobDetailView: View {
                 .frame(minWidth: 300)
                 .padding([.horizontal, .top], 30)
 
-            LinkSnapshotView(currentURLString: $listingString)
-                .frame(width: 350, height: 600)
         }
         
     }

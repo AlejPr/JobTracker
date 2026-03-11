@@ -18,11 +18,13 @@ final class JobListing: Identifiable, Hashable, CustomStringConvertible {
     var payRange: String?
     var schedule: String?
     var notes: String?
+    var requirements: String?
+    var jobDescription: String?
     var workLocationType: WorkLocationType?
     var salaryType: SalaryType?
     var applicationStatus: ApplicationStatus
     
-    init(title: String, company: String, location: String? = nil, jobURL: URL?, payRange: String? = nil, schedule: String? = nil, notes: String? = nil, workLocationType: WorkLocationType? = nil, salaryType: SalaryType? = nil, date: Date = Date(), applicationStatus: ApplicationStatus = .applied) {
+    init(title: String, company: String, location: String? = nil, jobURL: URL?, payRange: String? = nil, schedule: String? = nil, notes: String? = nil, requirements: String? = nil, jobDescription: String? = nil, workLocationType: WorkLocationType? = nil, salaryType: SalaryType? = nil, date: Date = Date(), applicationStatus: ApplicationStatus = .applied) {
         self.title = title
         self.company = company
         self.timeStampApplied = date
