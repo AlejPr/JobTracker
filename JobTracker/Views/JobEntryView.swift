@@ -322,8 +322,8 @@ extension JobEntryView {
             let newJob = JobListing(
                 title: jobTitle,
                 company: companyName,
-                location: location,
                 jobURL: URL(string: listingLink),
+                location: location,
                 payRange: salaryRange,
                 notes: notes,
                 requirements: requirements,

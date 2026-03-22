@@ -58,81 +58,110 @@ struct JobDetailView: View {
     
     
     var infoView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                let split = jobListing.company.split(separator: " ")
-                let companyAbbreviation: String = {
-                    if split.count > 1 { return "\(split[0].prefix(1).uppercased() + split[1].prefix(1).uppercased())" }
-                    return jobListing.company.prefix(2).uppercased()
-                }()
-                
-                Text(companyAbbreviation)
-                    .font(Font.system(size: 30, weight: .medium))
-                    .foregroundStyle(.blue)
-                    .frame(width: 80, height: 80)
-                    .background(Color.blue.opacity(0.2))
-                    .cornerRadius(10)
-                
-                LabeledAttribute(title: jobListing.title, text: jobListing.company,
-                                 titleFont: .largeTitle.bold(), titleStyle: .black,
-                                 textFont: .title)
-                .padding(.leading, 20)
-                
-            }
-            .padding(.bottom, 15)
+        VStack(spacing: 15) {
             
-            HStack() {
-                VStack(alignment: .leading, spacing: 15) {
-                    LabeledAttribute(title: "Applied", text: formattedDate)
+            //Main Detail View
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    let split = jobListing.company.split(separator: " ")
+                    let companyAbbreviation: String = {
+                        if split.count > 1 { return "\(split[0].prefix(1).uppercased() + split[1].prefix(1).uppercased())" }
+                        return jobListing.company.prefix(2).uppercased()
+                    }()
                     
-                    LabeledAttribute(title: "Location", text: jobListing.location ?? "Not Provided")
+                    Text(companyAbbreviation)
+                        .font(Font.system(size: 30, weight: .medium))
+                        .foregroundStyle(.blue)
+                        .frame(width: 80, height: 80)
+                        .background(Color.blue.opacity(0.2))
+                        .cornerRadius(10)
+                    
+                    LabeledAttribute(title: jobListing.title, text: jobListing.company,
+                                     titleFont: .largeTitle.bold(), titleStyle: .black,
+                                     textFont: .title)
+                    .padding(.leading, 20)
+                    
+                }
+                .padding(.bottom, 15)
+                
+                HStack() {
+                    VStack(alignment: .leading, spacing: 15) {
+                        LabeledAttribute(title: "Applied", text: formattedDate)
+                        
+                        LabeledAttribute(title: "Location", text: jobListing.location ?? "Not Provided")
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .leading, spacing: 15) {
+                        LabeledAttribute(
+                            title: "Salary Range",
+                            text: {
+                                guard let pay = jobListing.payRange else { return "Not Provided" }
+                                if let salaryType = jobListing.salaryType {
+                                    return "\(pay) (\(salaryType.rawValue))"
+                                }
+                                return pay
+                            }()
+                        )
+                        
+                        LabeledAttribute(
+                            title: "Schedule",
+                            text: {
+                                var parts: [String] = []
+                                if let schedule = jobListing.schedule { parts.append(schedule) }
+                                if let workType = jobListing.workLocationType { parts.append(workType.rawValue) }
+                                return parts.isEmpty ? "Not Provided" : parts.joined(separator: " · ")
+                            }()
+                        )
+                    }
+                    
+                    Spacer()
                 }
                 
-                Spacer()
-                
-                VStack(alignment: .leading, spacing: 15) {
-                    LabeledAttribute(
-                        title: "Salary Range",
-                        text: {
-                            guard let pay = jobListing.payRange else { return "Not Provided" }
-                            if let salaryType = jobListing.salaryType {
-                                return "\(pay) (\(salaryType.rawValue))"
-                            }
-                            return pay
-                        }()
-                    )
-                    
-                    LabeledAttribute(
-                        title: "Schedule",
-                        text: {
-                            var parts: [String] = []
-                            if let schedule = jobListing.schedule { parts.append(schedule) }
-                            if let workType = jobListing.workLocationType { parts.append(workType.rawValue) }
-                            return parts.isEmpty ? "Not Provided" : parts.joined(separator: " · ")
-                        }()
-                    )
-                }
-                
-                Spacer()
             }
+            .modifier(ViewEffectsModifier())
             
-            if let notes = jobListing.notes {
-                LabeledAttribute(title: "Notes", text: notes)
-                    .padding(.top, 10)
-                    .padding(.trailing, -35)
+            let fields: [(title: String, value: String?)] = [
+                ("Notes", jobListing.notes),
+                ("Requirements", jobListing.requirements),
+                ("Description", jobListing.jobDescription)
+            ]
+
+            ForEach(fields.indices, id: \.self) { index in
+                if let value = fields[index].value, !value.isEmpty {
+                    HStack {
+                        LabeledAttribute(title: fields[index].title,
+                                         text: value,
+                                         titleFont: .title2.weight(.medium),
+                                         titleStyle: .black,
+                                         textFont: .title2)
+                        Spacer()
+                    }
+                    .modifier(ViewEffectsModifier())
+                }
             }
             
         }
-        .padding(.horizontal, 25)
-        .padding(20)
-        .padding(.vertical, 10)
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(color: .black.opacity(0.2), radius: 3)
-        .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(sideBarDividerColor, lineWidth: 2)
+        
+    }
+    
+    private struct ViewEffectsModifier: ViewModifier {
+        
+        public func body(content: Content) -> some View {
+            content
+                .padding(.horizontal, 25)
+                .padding(20)
+                .padding(.vertical, 10)
+                .background(Color.white)
+                .cornerRadius(10)
+                .shadow(color: .black.opacity(0.2), radius: 3)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(sideBarDividerColor, lineWidth: 2)
+                }
         }
+        
     }
     
     
@@ -165,7 +194,7 @@ struct JobDetailView: View {
 
 #Preview {
     GeometryReader { proxy in
-        JobDetailView(jobListing: JobListing.sampleData[1], geometryProxy: proxy)
+        JobDetailView(jobListing: JobListing.realJobListingSample, geometryProxy: proxy)
     }
     .frame(width: 900, height: 700)
 }
