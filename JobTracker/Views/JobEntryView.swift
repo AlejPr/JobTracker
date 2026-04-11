@@ -12,6 +12,8 @@ import WebKit
 struct JobEntryView: View {
 
     @StateObject private var viewModel = ViewModel()
+    @StateObject private var webPageSnapShotViewModel = WebpageSnapshotView.ViewModel()
+    
     @Environment(SwiftDataContainer.self) private var dataContainer
     @Environment(\.customDismiss) var dismiss
     
@@ -80,10 +82,20 @@ struct JobEntryView: View {
                     
                     Spacer()
                     
-                    LabeledButton(
-                        selected: $viewModel.autofill,
-                        labelText: "Autofill"
-                    )
+                    let isValid = isValidUrl(url: viewModel.listingLink)
+                    Button { viewModel.attemptAutofill() }
+                    label: {
+                        Text("Autofill")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(Color.white)
+                            .frame(height: 10)
+                            .padding(10)
+                            .padding(.bottom, 2)
+                            .background(isValid ? Color.accentColor : Color.gray.opacity(0.8))
+                            .cornerRadius(5)
+                    }
+                    .disabled(!isValid)
+                    .buttonStyle(PressedOpacityButtonStyle())
                 }
                 
                 TextField(" ", text: $viewModel.listingLink)
@@ -218,21 +230,10 @@ struct JobEntryView: View {
     var webPreview: some View {
         VStack(spacing: 8) {
             
-            HStack {
-                LabeledButton(
-                    selected: $viewModel.saveWebPage,
-                    labelText: "Save Webpage"
-                )
-                
-                Button {
-                    viewModel.toggleTooltip()
-                } label: {
-                    Image(systemName: "questionmark.circle")
-                        .font(Font.system(size: 16, weight: .medium))
-                        .foregroundStyle(Color.gray)
-                        .padding(.horizontal, -12)
-                }
-            }
+            LabeledButton(
+                selected: $viewModel.saveWebPage,
+                labelText: "Save Offline Copy"
+            )
             .padding(.top, 8)
             .opacity(isValidUrl(url: viewModel.listingLink) ? 1 : 0)
             .animation(.easeInOut(duration: 0.2), value: viewModel.listingLink)
@@ -247,9 +248,10 @@ struct JobEntryView: View {
                 }
             }
 
-            LinkSnapshotView(currentURLString: $viewModel.listingLink,
-                             isExpanded: $viewModel.webViewIsExpanded,
-                             canExpand: !isCompact)
+            WebpageSnapshotView(viewModel: webPageSnapShotViewModel,
+                                currentURLString: $viewModel.listingLink,
+                                isExpanded: $viewModel.webViewIsExpanded,
+                                canExpand: !isCompact)
             
         }
         .padding(.horizontal, 16)
@@ -271,17 +273,19 @@ struct JobEntryView: View {
         
         Task {
             do {
-                try viewModel.saveNewListing(with: dataContainer)
+                try await viewModel.saveNewListing(with: dataContainer, webPageSnapShotViewModel)
                 try await Task.sleep(nanoseconds: 1_000_000_000)
                 await MainActor.run {
-                    addJobButtonPressed = false
-                    dismiss()
+                    withAnimation {
+                        addJobButtonPressed = false
+                        dismiss()
+                    }
                 }
             } catch {
                 print("Error, could not save job listing! \(error)")
                 await MainActor.run {
                     addJobButtonPressed = false
-                    withAnimation(.easeInOut(duration: 0.25), { addJobButtonEnabled = true })
+                    withAnimation { addJobButtonEnabled = true }
                 }
             }
         }
@@ -310,31 +314,56 @@ extension JobEntryView {
         @Published var requirements: String = ""
         @Published var jobDescription: String = ""
         
-        @Published var autofill: Bool = true
         @Published var saveWebPage: Bool = true
-        
         @Published var expandedPickerId: String?
         @Published var showTooltip: Bool = false
         @Published var webViewIsExpanded: Bool = false
         
 
-        func saveNewListing(with dataContainer: SwiftDataContainer) throws {
+        func saveNewListing(with dataContainer: SwiftDataContainer,_ snapshotViewModel: WebpageSnapshotView.ViewModel) async throws {
             let newJob = JobListing(
                 title: jobTitle,
                 company: companyName,
                 jobURL: URL(string: listingLink),
-                location: location,
-                payRange: salaryRange,
-                notes: notes,
-                requirements: requirements,
-                jobDescription: jobDescription,
+                location: location.isEmpty ? nil : location,
+                payRange: salaryRange.isEmpty ? nil : location,
+                notes: notes.isEmpty ? nil : notes,
+                requirements: requirements.isEmpty ? nil : requirements,
+                jobDescription: jobDescription.isEmpty ? nil : jobDescription,
                 workLocationType: workLocationType,
                 salaryType: salaryType,
             )
             
-            do { try dataContainer.insertJobListing(newJob) }
-            catch { throw error }
+            do {
+                if saveWebPage && isValidUrl(url: listingLink) {
+                    let pdfResult = try await snapshotViewModel.exportPDF()
+                    let archivePathExtension = try savePDFData(newJob, pdfResult)
+                    newJob.saveDataFilePath = archivePathExtension
+                }
+                
+                try dataContainer.insertJobListing(newJob)
+            } catch { throw error }
         }
+        
+        
+        private func savePDFData(_ listing: JobListing,_ data: Data) throws -> String {
+            let dateFolder = "\(FileManagerUtility.dateFormatter.string(from: Date()))"
+            let listingFolder = "\(listing.title) [\(listing.company)]"
+            var pathExtension = "\(dateFolder)/\(listingFolder)"
+            
+            do {
+                try FileManagerUtility.createNewDirectory(pathExtension)
+                pathExtension.append("/archive.pdf")
+                try FileManagerUtility.saveToDirectory(data, pathExtension)
+                return pathExtension
+            } catch { throw error }
+        }
+        
+        
+        func attemptAutofill() {
+            print("Autofill called")
+        }
+        
         
         func toggleTooltip() {
             withAnimation(.easeInOut(duration: 0.25)) {
@@ -523,6 +552,7 @@ extension JobEntryView {
     }
     
 }
+
 
 
 //MARK: - Preview

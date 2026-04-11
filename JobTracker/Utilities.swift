@@ -29,6 +29,15 @@ public struct TextFieldPlaceholderStyle: ViewModifier {
 }
 
 
+public struct PressedOpacityButtonStyle: ButtonStyle {
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.6 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
+
 //MARK: - Custom Picker View
 struct CustomPickerView<T: Hashable>: View {
     
@@ -191,7 +200,7 @@ struct LargeStylizedButton: View {
 
 //MARK: - Functions
 public func isValidUrl(url: String) -> Bool {
-    let urlRegEx = "^(https?://)?(www\\.)?([-a-z0-9]{1,63}\\.)*?[a-z0-9][-a-z0-9]{0,61}[a-z0-9]\\.[a-z]{2,6}(/[-\\w@\\+\\.~#\\?&/=%]*)?$"
+    let urlRegEx = "^(https?://)?([a-z0-9-]+\\.)+[a-z]{2,63}(/[-\\w@\\+\\.~#\\?&/=%]*)?$"
     let urlTest = NSPredicate(format:"SELF MATCHES %@", urlRegEx)
     let result = urlTest.evaluate(with: url)
     return result

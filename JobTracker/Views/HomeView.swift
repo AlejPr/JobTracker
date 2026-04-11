@@ -96,13 +96,13 @@ struct HomeView: View {
                                     
                                 case .jobListing(let listing):
                                     
-                                    JobDetailView(listingString: "",
-                                                  jobListing: listing,
+                                    JobDetailView(jobListing: listing,
                                                   geometryProxy: proxy)
+                                    .id(listing.id)
                                     
                                 case .statistics: Color.orange
                                 case .calendar: Color.purple
-                                case .documents: Color.blue
+                                case .documents: Color.blue //Placeholder
                                 }
                             }
                     }
@@ -170,7 +170,7 @@ enum SidebarItem: String, CaseIterable {
 //MARK: - Sidebar
 struct Sidebar: View {
     @Binding var selectedItem: SidebarItem
-    let onItemSelected: () -> Void
+    let onItemSelected: (SidebarItem) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -191,8 +191,7 @@ struct Sidebar: View {
                         item: item,
                         isSelected: selectedItem == item
                     ) {
-                        selectedItem = item
-                        onItemSelected()
+                        onItemSelected(item)
                     }
                 }
             }
@@ -248,10 +247,14 @@ extension HomeView {
         @Published var shouldShowAddJobButton: Bool = true
         @Published var topbarAddJobButtonEnabled: Bool = false
         @Published var topbarAddJobButtonPressed: Bool = false
-        
-        func sideBarItemSelected() {
-            navigationPathStack = [sideBarSelectedItem.destination]
-            showAddJobButton()
+                
+        func sideBarItemSelected(_ item: SidebarItem) {
+            if item == .documents { FileManagerUtility.openDocumentsDirectory() }
+            else {
+                sideBarSelectedItem = item
+                navigationPathStack = [sideBarSelectedItem.destination]
+                showAddJobButton()
+            }
         }
         
         func settingsTapped() {

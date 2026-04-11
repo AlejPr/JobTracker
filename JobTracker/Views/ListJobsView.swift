@@ -31,9 +31,9 @@ struct ListJobsView: View {
                 .frame(height: 20)
             
             let sortedListingGroups = groupJobListingsByDate(jobListings)
-            ForEach(sortedListingGroups.indices, id: \.self) { groupIndex in
+            ForEach(sortedListingGroups, id: \.self) { group in
                 JobListingGroup(
-                    jobListings: sortedListingGroups[groupIndex],
+                    jobListings: group,
                     jobListingTapped: { listing in
                         withAnimation { navigationPathStack.append(.jobListing(listing)) }
                     }
@@ -90,7 +90,7 @@ fileprivate struct JobListingGroup: View {
                 .foregroundColor(Color(red: 75/255, green: 85/255, blue: 99/255))
                 .padding(.leading, 30)
             
-            ForEach(jobListings) { jobListing in
+            ForEach(jobListings, id: \.self) { jobListing in
                 JobListingView(
                     jobListing: jobListing,
                     tapped: jobListingTapped

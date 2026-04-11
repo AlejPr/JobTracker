@@ -4,35 +4,70 @@
 //
 
 import SwiftUI
+import PDFKit
+import Combine
+import SwiftData
 
 
 struct JobDetailView: View {
     
-    @State var listingString: String = ""
-    var jobListing: JobListing
-    let geometryProxy: GeometryProxy
+    @StateObject private var viewModel: ViewModel
+
+    @State var webViewIsExpanded: Bool = false
+    @State var currentPDFZoom: CGFloat = 1
     
+    var geometryProxy: GeometryProxy
     private var isCompact: Bool { geometryProxy.size.width < 900 }
+    private var jobListing: JobListing { viewModel.jobListing }
     
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter.string(from: jobListing.timeStampApplied)
+    init(jobListing: JobListing, geometryProxy: GeometryProxy) {
+        self.geometryProxy = geometryProxy
+        _viewModel = StateObject(wrappedValue: ViewModel(jobListing: jobListing))
     }
     
     var body: some View {
-        ScrollView {
-            
-            Group {
-                if isCompact { verticalLayout }
-                else { horizontalLayout }
+        ZStack(alignment: .bottomLeading) {
+            ScrollView {
+                
+                Group {
+                    if isCompact { verticalLayout }
+                    else { horizontalLayout }
+                }
+                //.frame(minHeight: geometryProxy.size.height - 70)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.25), value: isCompact)
             }
-            //.frame(minHeight: geometryProxy.size.height - 70)
-            .transition(.opacity)
-            .animation(.easeInOut(duration: 0.25), value: isCompact)
+            //.scrollDisabled(webViewIsExpanded)
+            .background(Color.white)
+            
+            if let saveDataFilePath = jobListing.saveDataFilePath, let pdfData = viewModel.loadPDFData(with: saveDataFilePath) {
+                
+                ZStack(alignment: .topTrailing) {
+                    PDFKitView(pdfData: pdfData,
+                               currentPDFZoom: $currentPDFZoom)
+                    
+                    WebViewZoomControls(
+                        onZoomIn: { currentPDFZoom = min(currentPDFZoom + 0.15, 3.0) },
+                        onZoomOut: { currentPDFZoom = max(currentPDFZoom - 0.15, 0.5) }
+                    )
+                    .frame(maxHeight: 45)
+                    .padding(20)
+                    .padding(.trailing, 15)
+                }
+                .frame(maxWidth: webViewIsExpanded ? .infinity : 20, maxHeight: webViewIsExpanded ? .infinity : 20)
+                .opacity(webViewIsExpanded ? 1 : 0)
+                .cornerRadius(12)
+                .padding(webViewIsExpanded ? 15 : 25)
+                
+                WebViewExpansionButton(
+                    isExpanded: $webViewIsExpanded,
+                    chevronImage: "chevron.up",
+                    chevronSize: 22,
+                    frameSize: 54
+                )
+                .padding(20)
+            }
         }
-        .background(Color.white)
     }
     
     
@@ -41,7 +76,6 @@ struct JobDetailView: View {
             infoView
                 .frame(minWidth: 300)
                 .padding(25)
-            
         }
     }
     
@@ -51,9 +85,7 @@ struct JobDetailView: View {
             infoView
                 .frame(minWidth: 300)
                 .padding([.horizontal, .top], 30)
-
         }
-        
     }
     
     
@@ -86,7 +118,7 @@ struct JobDetailView: View {
                 
                 HStack() {
                     VStack(alignment: .leading, spacing: 15) {
-                        LabeledAttribute(title: "Applied", text: formattedDate)
+                        LabeledAttribute(title: "Applied", text: viewModel.formattedDate)
                         
                         LabeledAttribute(title: "Location", text: jobListing.location ?? "Not Provided")
                     }
@@ -188,6 +220,76 @@ struct JobDetailView: View {
         }
     }
     
+}
+
+
+//MARK: - PDFKit View
+extension JobDetailView {
+    
+    private struct PDFKitView: NSViewRepresentable {
+        
+        let pdfData: Data
+        @Binding var currentPDFZoom: CGFloat
+        
+        func makeCoordinator() -> Coordinator { Coordinator() }
+        
+        func makeNSView(context: Context) -> PDFView {
+            let pdfView = PDFView()
+            pdfView.autoScales = true
+            pdfView.document = PDFDocument(data: pdfData)
+            return pdfView
+        }
+        
+        func updateNSView(_ pdfView: PDFView, context: Context) {
+            context.coordinator.updatePDFZoom(with: pdfView, currentPDFZoom)
+        }
+        
+        final class Coordinator {
+            private var localPDFZoomModifier: CGFloat = 1
+
+            func updatePDFZoom(with pdfView: PDFView,_ updatedZoom: CGFloat) {
+                if updatedZoom < localPDFZoomModifier { pdfView.zoomOut(nil) }
+                else if updatedZoom > localPDFZoomModifier { pdfView.zoomIn(nil) }
+                localPDFZoomModifier = updatedZoom
+            }
+            
+        }
+        
+    }
+    
+}
+
+
+//MARK: - ViewModel
+extension JobDetailView {
+    
+    @MainActor
+    final private class ViewModel: ObservableObject {
+        
+        var jobListing: JobListing
+        
+        init(jobListing: JobListing) {
+            self.jobListing = jobListing
+        }
+        
+        var formattedDate: String {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .none
+            return formatter.string(from: jobListing.timeStampApplied)
+        }
+        
+        func loadPDFData(with filePath: String) -> Data? {
+            do {
+                return try FileManagerUtility.loadPDFData(filePath)
+            }
+            catch {
+                NSLog("[JobDetailView] Could not load PDF data for \(filePath): \(error)")
+                return nil
+            }
+        }
+        
+    }
     
 }
 
@@ -198,3 +300,4 @@ struct JobDetailView: View {
     }
     .frame(width: 900, height: 700)
 }
+

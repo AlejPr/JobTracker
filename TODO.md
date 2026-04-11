@@ -18,3 +18,5 @@
 - Star and pin listings: 
 -- Starred can be filtered
 -- Pinned always appear on top
+- Make text selectable on jobdetailview
+- Improve PDF Saving resolution

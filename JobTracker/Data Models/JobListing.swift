@@ -14,6 +14,7 @@ final class JobListing: Identifiable, Hashable, CustomStringConvertible {
     var company: String
     var timeStampApplied: Date
     var jobURL: URL?
+    var saveDataFilePath: String? = nil
     var location: String?
     var payRange: String?
     var schedule: String?
@@ -110,6 +111,7 @@ extension JobListing {
     }
     
     static var sampleData: [JobListing] {[
+        realJobListingSample,
         JobListing(
             title: "Unemployment assistance",
             company: "Government",

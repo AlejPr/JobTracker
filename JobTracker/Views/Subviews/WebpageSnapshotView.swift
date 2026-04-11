@@ -1,5 +1,5 @@
 //
-//  LinkSnapshotView.swift
+//  WebpageSnapshotView.swift
 //  JobTracker
 //
 
@@ -7,9 +7,10 @@ import SwiftUI
 import WebKit
 import Combine
 
-struct LinkSnapshotView: View {
+struct WebpageSnapshotView: View {
     
-    @StateObject private var viewModel = ViewModel()
+    @ObservedObject var viewModel: ViewModel
+    
     @State var currentWebpageZoom: CGFloat = 1.0
     @Binding var currentURLString: String
     @Binding var isExpanded: Bool
@@ -38,7 +39,7 @@ struct LinkSnapshotView: View {
     
     private var webSnapshotView: some View {
         ZStack(alignment: .top) {
-            CustomWebView(currentWebpageZoom: $currentWebpageZoom, listingURL: $viewModel.currentURL)
+            CustomWebView(currentWebpageZoom: $currentWebpageZoom, listingURL: $viewModel.currentURL, attachWebView: viewModel.attachWebView(_:))
             
             HStack {
                 if canExpand {
@@ -85,13 +86,14 @@ struct LinkSnapshotView: View {
 
 
 //MARK: - Webview
-extension LinkSnapshotView {
+extension WebpageSnapshotView {
     
     struct CustomWebView: NSViewRepresentable {
         
-        @State var currentWebView: WKWebView?
+        //@State var currentWebView: WKWebView?
         @Binding var currentWebpageZoom: CGFloat
         @Binding var listingURL: URL?
+        let attachWebView: (WKWebView) -> Void
         
         func makeNSView(context: Context) -> WKWebView {
             let config = WKWebViewConfiguration()
@@ -104,7 +106,7 @@ extension LinkSnapshotView {
             webView.allowsBackForwardNavigationGestures = true
             
             webView.load(URLRequest(url: listingURL!))
-            DispatchQueue.main.async { self.currentWebView = webView }
+            DispatchQueue.main.async { attachWebView(webView) }
             return webView
         }
         
@@ -130,82 +132,11 @@ extension LinkSnapshotView {
         
     }
     
-    struct WebViewExpansionButton: View {
-        
-        @Binding var isExpanded: Bool
-        
-        var body: some View {
-            Button {
-                withAnimation { isExpanded = !isExpanded }
-            }
-            label: {
-                ZStack {
-                    Color.white
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(Color.gray)
-                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                }
-            }
-            .buttonStyle(.plain)
-            .contentShape(Rectangle())
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(sideBarDividerColor, lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 2)
-        }
-        
-    }
-    
-    struct WebViewZoomControls: View {
-        let onZoomIn: () -> Void
-        let onZoomOut: () -> Void
-        
-        var body: some View {
-            HStack(spacing: 0) {
-                Button(action: onZoomOut) {
-                    Image(systemName: "minus.magnifyingglass")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(Color.gray)
-                        .frame(width: 44, height: 36)
-                        .background(Color.white)
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-                
-                Rectangle()
-                    .fill(sideBarDividerColor)
-                    .frame(width: 2)
-                
-                Button(action: onZoomIn) {
-                    Image(systemName: "plus.magnifyingglass")
-                        .font(.system(size: 16, weight: .medium))
-                        .frame(width: 44, height: 36)
-                        .foregroundStyle(Color.gray)
-                        .background(Color.white)
-                }
-                .buttonStyle(.plain)
-                .contentShape(Rectangle())
-            }
-            .background(Color.white)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(sideBarDividerColor, lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 2)
-        }
-    }
-    
 }
 
 
 //MARK: - View Model
-extension LinkSnapshotView {
+extension WebpageSnapshotView {
     
     @MainActor
     final class ViewModel: ObservableObject {
@@ -213,11 +144,33 @@ extension LinkSnapshotView {
         @Published var currentURL: URL? = nil
         @Published var currentImage: NSImage? = nil
         @Published var fetchError: String? = nil
+        private weak var webView: WKWebView?
         
         func updateURL(_ newURLString: String) {
             let trimmed = newURLString.trimmingCharacters(in: .whitespacesAndNewlines)
             currentURL = isValidUrl(url: trimmed) ? URL(string: trimmed) : nil
-
+        }
+        
+        func attachWebView(_ webView: WKWebView) { self.webView = webView }
+    
+        
+        public func exportPDF() async throws -> Data {
+            return try await withCheckedThrowingContinuation { continuation in
+                guard let webView else {
+                    continuation.resume(throwing: NSError(domain: "WebpageSnapshotView", code: 1, userInfo: [NSLocalizedDescriptionKey: "No WebView available"]))
+                    return
+                }
+                 
+                let config = WKPDFConfiguration()
+                webView.createPDF(configuration: config) { result in
+                    switch result {
+                    case .success(let data): continuation.resume(returning: data)
+                    case .failure(let error): continuation.resume(throwing: error)
+                    }
+                }
+                
+                return
+            }
         }
         
     }
@@ -240,9 +193,10 @@ fileprivate struct PreviewStruct: View {
     static let apple = "https://www.apple.org"
     @State var pageString = Self.google
     @State var isExpanded: Bool = false
+    @StateObject var vm = WebpageSnapshotView.ViewModel()
     
     var body: some View {
-        LinkSnapshotView(currentURLString: $pageString, isExpanded: $isExpanded, canExpand: true)
+        WebpageSnapshotView(viewModel: vm, currentURLString: $pageString, isExpanded: $isExpanded, canExpand: true)
     }
     
 }
