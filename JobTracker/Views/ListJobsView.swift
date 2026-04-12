@@ -9,7 +9,7 @@ import SwiftData
 struct ListJobsView: View {
     
     @Query(sort: \JobListing.timeStampApplied, order: .reverse) private var jobListings: [JobListing]
-    @Binding var navigationPathStack: [NavigationDestination]
+    @Environment(\.appendNavigationPath) var appendToNavigationStack
     
     var body: some View {
         if !jobListings.isEmpty {
@@ -34,11 +34,9 @@ struct ListJobsView: View {
             ForEach(sortedListingGroups, id: \.self) { group in
                 JobListingGroup(
                     jobListings: group,
-                    jobListingTapped: { listing in
-                        withAnimation { navigationPathStack.append(.jobListing(listing)) }
-                    }
+                    jobListingTapped: { appendToNavigationStack(.jobListing($0), true) }
                 )
-                    .padding(.bottom, 20)
+                .padding(.bottom, 20)
             }
             
             Spacer()
@@ -269,17 +267,16 @@ fileprivate class CustomDateFormatter: DateFormatter, @unchecked Sendable {
 fileprivate let dateFormatter = CustomDateFormatter()
 
 fileprivate struct PreviewStruct: View {
-    @State var test = [NavigationDestination]()
     let empty: Bool
     
     var body: some View {
         if !empty {
-            ListJobsView(navigationPathStack: $test)
+            ListJobsView()
                 .sampleContainer()
                 .frame(width: 700, height: 500)
         }
         else {
-            ListJobsView(navigationPathStack: $test)
+            ListJobsView()
                 .modelContainer(for: [JobListing.self])
         }
     }

@@ -7,5 +7,6 @@ import SwiftUI
 
 extension EnvironmentValues {
     @Entry var customDismiss: () -> Void = { }
-    @Entry var navigationPathStack: [HomeView.NavigationDestination] = []
+    @Entry var appendNavigationPath: (NavigationDestination, Bool) -> Void = { _, _  in }
+    @Entry var topbarViewModel: DashboardTopBarView.ViewModel = DashboardTopBarView.ViewModel()
 }

@@ -145,7 +145,7 @@ extension JobListing {
         JobListing(
             title: "Weird Job",
             company: "Local Company",
-            jobURL: URL(string: "https://test.com")!,
+            jobURL: nil,
             date: makeDate(year: 2026, month: 2, day: 1, hour: 13),
             applicationStatus: .applied
         ),

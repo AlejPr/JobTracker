@@ -15,11 +15,9 @@ struct JobEntryView: View {
     @StateObject private var webPageSnapShotViewModel = WebpageSnapshotView.ViewModel()
     
     @Environment(SwiftDataContainer.self) private var dataContainer
+    @Environment(\.topbarViewModel) var tbVM
     @Environment(\.customDismiss) var dismiss
-    
-    @Binding var addJobButtonEnabled: Bool
-    @Binding var addJobButtonPressed: Bool
-    
+        
     let geometryProxy: GeometryProxy
     
     private var isCompact: Bool { geometryProxy.size.width < 900 }
@@ -38,8 +36,8 @@ struct JobEntryView: View {
         }
         .background(Color.white)
         .onTapGesture { viewModel.dismissOverlays() }
-        .onAppear { addJobButtonEnabled = false }
-        .onChange(of: addJobButtonPressed) { _, newValue in addJobButtonPressed(newValue) }
+        .onAppear { tbVM.entryViewAddJobButtonEnabled = false }
+        .onChange(of: tbVM.entryViewAddJobButtonPressed) { _, newValue in addJobButtonPressed(newValue) }
     }
     
     
@@ -262,14 +260,14 @@ struct JobEntryView: View {
     //MARK: - State Functions
     private func checkCanAddJob() {
         let newValue = !viewModel.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.jobTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        guard newValue != addJobButtonEnabled else { return }
-        withAnimation(.easeInOut(duration: 0.25)) { addJobButtonEnabled = newValue }
+        guard newValue != tbVM.entryViewAddJobButtonEnabled else { return }
+        withAnimation(.easeInOut(duration: 0.25)) { tbVM.entryViewAddJobButtonEnabled = newValue }
     }
     
     
     private func addJobButtonPressed(_ newValue: Bool) {
         guard newValue else { return }
-        withAnimation(.easeInOut(duration: 0.25), { addJobButtonEnabled = false })
+        withAnimation(.easeInOut(duration: 0.25), { tbVM.entryViewAddJobButtonEnabled = false })
         
         Task {
             do {
@@ -277,15 +275,15 @@ struct JobEntryView: View {
                 try await Task.sleep(nanoseconds: 1_000_000_000)
                 await MainActor.run {
                     withAnimation {
-                        addJobButtonPressed = false
+                        tbVM.entryViewAddJobButtonPressed = false
                         dismiss()
                     }
                 }
             } catch {
                 print("Error, could not save job listing! \(error)")
                 await MainActor.run {
-                    addJobButtonPressed = false
-                    withAnimation { addJobButtonEnabled = true }
+                    tbVM.entryViewAddJobButtonPressed = false
+                    withAnimation { tbVM.entryViewAddJobButtonEnabled = true }
                 }
             }
         }
@@ -566,12 +564,10 @@ extension JobEntryView {
 
 
 fileprivate struct PreviewStruct: View {
-    @State var bool1: Bool = false
-    @State var bool2: Bool = false
     
     var body: some View {
         GeometryReader { proxy in
-            JobEntryView(addJobButtonEnabled: $bool1, addJobButtonPressed: $bool2, geometryProxy: proxy)
+            JobEntryView(geometryProxy: proxy)
         }
         .sampleContainer()
         .environment(\.customDismiss, { })

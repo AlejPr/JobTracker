@@ -14,8 +14,16 @@ public let sideBarDividerColor = Color(red: 227/255, green: 229/255, blue: 233/2
 
 struct HomeView: View {
     
-    @StateObject private var viewModel = ViewModel()
+    @StateObject private var viewModel: ViewModel
+    @StateObject private var dashboardViewModel: DashboardTopBarView.ViewModel
+    
     @FocusState private var isSearchFieldFocused: Bool
+    
+    init() {
+        let dbVM = DashboardTopBarView.ViewModel()
+        _dashboardViewModel = StateObject(wrappedValue: dbVM)
+        _viewModel = StateObject(wrappedValue: ViewModel(dbVM))
+    }
     
     var body: some View {
         HStack(spacing: 0) {
@@ -59,15 +67,13 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     
                     DashboardTopBarView(
-                        searchText: $viewModel.searchText,
-                        navigationPath: $viewModel.navigationPathStack,
-                        addJobButtonEnabled: $viewModel.topbarAddJobButtonEnabled,
-                        addJobButtonPressed: $viewModel.topbarAddJobButtonPressed,
+                        viewModel: dashboardViewModel,
                         isSearchFieldFocused: $isSearchFieldFocused,
                         geometryProxy: proxy,
                         onSettingsTapped: viewModel.settingsTapped,
                         onBackTapped: viewModel.backButtonTapped,
                     )
+                    .environmentObject(dashboardViewModel)
                     .zIndex(100)
                     
                     //Divider Bar
@@ -82,23 +88,20 @@ struct HomeView: View {
                             .navigationBarBackButtonHidden(true)
                             .navigationDestination(for: NavigationDestination.self) { destination in
                                 switch destination {
-                                case .dashboard: Color.green
+                                case .dashboard:
+                                    Color.green
+                                    
                                 case .jobEntry:
-                                                                        
-                                    JobEntryView(addJobButtonEnabled: $viewModel.topbarAddJobButtonEnabled,
-                                                 addJobButtonPressed: $viewModel.topbarAddJobButtonPressed,
-                                                 geometryProxy: proxy)
-                                    .environment(\.customDismiss, viewModel.backButtonTapped)
+                                    JobEntryView(geometryProxy: proxy)
+                                        .environment(\.customDismiss, viewModel.backButtonTapped)
+                                        .transition(.move(edge: .bottom))
                                     
                                 case .jobListings:
-                                    
-                                    ListJobsView(navigationPathStack: $viewModel.navigationPathStack)
+                                    ListJobsView()
                                     
                                 case .jobListing(let listing):
-                                    
-                                    JobDetailView(jobListing: listing,
-                                                  geometryProxy: proxy)
-                                    .id(listing.id)
+                                    JobDetailView(jobListing: listing, geometryProxy: proxy)
+                                        .id(listing.id)
                                     
                                 case .statistics: Color.orange
                                 case .calendar: Color.purple
@@ -106,6 +109,9 @@ struct HomeView: View {
                                 }
                             }
                     }
+                    .environment(\.topbarViewModel, dashboardViewModel)
+                    .environment(\.appendNavigationPath, viewModel.appendToNavigationStack(_:animated:))
+
                 }
                 
             }
@@ -241,20 +247,26 @@ extension HomeView {
     final class ViewModel: ObservableObject {
         
         @Published var navigationPathStack: [NavigationDestination] = []
-        @Published var searchText: String = ""
-        
         @Published var sideBarSelectedItem: SidebarItem = .dashboard
         @Published var shouldShowAddJobButton: Bool = true
-        @Published var topbarAddJobButtonEnabled: Bool = false
-        @Published var topbarAddJobButtonPressed: Bool = false
+        
+        unowned let tbVM: DashboardTopBarView.ViewModel
                 
+        init(_ dashBoardTopBarViewModel: DashboardTopBarView.ViewModel) {
+            self.tbVM = dashBoardTopBarViewModel
+        }
+        
         func sideBarItemSelected(_ item: SidebarItem) {
-            if item == .documents { FileManagerUtility.openDocumentsDirectory() }
-            else {
-                sideBarSelectedItem = item
-                navigationPathStack = [sideBarSelectedItem.destination]
-                showAddJobButton()
+            if item == .documents {
+                FileManagerUtility.openDocumentsDirectory()
+                return
             }
+
+            sideBarSelectedItem = item
+            navigationPathStack = []
+            tbVM.resetSchemaStack()
+            appendToNavigationStack(item.destination, animated: false)
+            showAddJobButton()
         }
         
         func settingsTapped() {
@@ -263,33 +275,45 @@ extension HomeView {
         }
         
         func backButtonTapped() {
-            guard let last = navigationPathStack.last else { return }
-            
-            switch last {
-            case .jobEntry:
-                showAddJobButton()
-                navigationPathStack.removeLast()
-            default:
-                _ = withAnimation { navigationPathStack.removeLast() }
-            }
+            if navigationPathStack.last == .jobEntry { showAddJobButton() }
+            removeFromNavigationStack()
         }
         
         func addNewJobTapped() {
             hideAddJobButton()
-            navigationPathStack.append(.jobEntry)
+            appendToNavigationStack(.jobEntry)
         }
         
         private func showAddJobButton() {
-            withAnimation(.spring(response: 0.5)) {
-                shouldShowAddJobButton = true
-            }
+            withAnimation { shouldShowAddJobButton = true }
         }
         
         private func hideAddJobButton() {
-            withAnimation(.spring(response: 0.5)) {
-                shouldShowAddJobButton = false
-            }
+            withAnimation { shouldShowAddJobButton = false }
         }
+        
+        
+        func appendToNavigationStack(_ newDestination: NavigationDestination, animated: Bool = true) {
+            switch newDestination {
+            case .jobEntry: tbVM.addSchema(.backButtonWithJobEntryButton)
+            case .jobListings: tbVM.addSchema(.searchFieldWithFilterAndSort)
+            case .jobListing(let listing):
+                if listing.jobURL == nil { tbVM.addSchema(.backButtonWithEdit) }
+                else { tbVM.addSchema(.backButtonWithWebLinkAndEdit) }
+            default: break
+            }
+            
+            if animated {
+                withAnimation { navigationPathStack.append(newDestination) }
+            }
+            else { navigationPathStack.append(newDestination) }
+        }
+        
+        
+        func removeFromNavigationStack() {
+            withAnimation { navigationPathStack.removeLast() }
+        }
+        
     }
 }
 

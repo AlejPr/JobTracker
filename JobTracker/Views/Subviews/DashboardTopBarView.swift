@@ -5,15 +5,12 @@
 
 
 import SwiftUI
+import Combine
 
 //MARK: - Top Bar
 struct DashboardTopBarView: View {
     
-    @Binding var searchText: String
-    @Binding var navigationPath: [HomeView.NavigationDestination]
-    
-    @Binding var addJobButtonEnabled: Bool
-    @Binding var addJobButtonPressed: Bool
+    unowned let viewModel: ViewModel
     
     @FocusState.Binding var isSearchFieldFocused: Bool
     
@@ -21,55 +18,64 @@ struct DashboardTopBarView: View {
     let onSettingsTapped: () -> Void
     let onBackTapped: () -> Void
     
-    private var isCompact: Bool { return geometryProxy.size.width < 900 }
+    private var schema: DashboardTopBarViewSchema { return viewModel.schemaStack.last! }
     
-    private var schema: DashboardTopBarViewSchema {
-        switch navigationPath.last {
-        case .jobEntry: .backButtonWithJobEntryButton
-        case .jobListings: .searchFieldWithFilterAndSort
-        case .jobListing(_): .backButton
-        default: .searchField
-        }
-    }
-
     var body: some View {
         viewForCurrentSchema
             .padding(.leading, 20)
             .frame(height: 70)
             .background(Color.white)
             .buttonStyle(.plain)
-            .animation(.easeInOut(duration: 0.25), value: navigationPath)
             .animation(.easeInOut(duration: 0.25), value: schema)
     }
     
     
     private var viewForCurrentSchema: some View {
         HStack(spacing: 8) {
-            if [.backButton, .backButtonWithJobEntryButton].contains(schema) {
+            if schema.backButton {
                 backButton
-                if schema == .backButtonWithJobEntryButton { jobEntryButton }
             }
             
-            else if [.searchField, .searchFieldWithFilterAndSort].contains(schema) {
+            if schema == .backButtonWithJobEntryButton {
+                jobEntryButton
+            }
+            
+            if schema.searchField {
                 searchField
-                
-                if schema == .searchFieldWithFilterAndSort {
-                    Spacer()
-                        .frame(minWidth: 0)
-                        .background(Color.red)
-                    filterButtons
+            }
+            
+            if schema != .backButtonWithJobEntryButton {
+                Spacer()
+                    .frame(minWidth: 0)
+            }
+            
+            if !schema.customButtons.isEmpty {
+                ForEach(schema.customButtons, id: \.icon) { buttonSchema in
+                    ToolTipButton(icon: buttonSchema.icon, tooltip: buttonSchema.toolTip ?? "", action: buttonSchema.action)
+                        .padding(.trailing, 5)
                 }
             }
             
-            if schema != .searchFieldWithFilterAndSort { Spacer() }
-            
-            profileIcon
+            if schema.profilePicture {
+                profileIcon
+            }
         }
     }
     
     
+}
+
+
+//MARK: - Reusable Elements
+extension DashboardTopBarView {
+    
+    
     private var backButton: some View {
-        Button(action: onBackTapped) {
+        Button {
+            viewModel.backButtonTapped()
+            onBackTapped()
+        }
+        label : {
             Image(systemName: "chevron.left")
                 .font(.system(size: 22))
                 .foregroundColor(.gray)
@@ -83,11 +89,11 @@ struct DashboardTopBarView: View {
     
     
     private var jobEntryButton: some View {
-        LargeStylizedButton(action: { addJobButtonPressed = true },
+        LargeStylizedButton(action: { viewModel.entryViewAddJobButtonPressed = true },
                             imageName: "plus",
                             title: "Add Job",
                             isVisible: true,
-                            disabled: !addJobButtonEnabled)
+                            disabled: !viewModel.entryViewAddJobButtonEnabled)
     }
     
     
@@ -105,53 +111,42 @@ struct DashboardTopBarView: View {
     
     
     private var searchField: some View {
-        TextField("", text: $searchText)
-            .font(.title3)
-            .foregroundColor(.black)
-            .padding(.leading, 44)
-            .padding(.trailing, 16)
-            .frame(height: 48)
-            .cornerRadius(8)
-            .containerRelativeFrame(.horizontal, { length, _ in return max(220, length / 3) })
-            .textFieldStyle(.plain)
-            .focusable(false)
-            .focused($isSearchFieldFocused)
-            .alignmentGuide(.firstTextBaseline, computeValue: { _ in 10})
-            .modifier(TextFieldPlaceholderStyle(
-                showPlaceHolder: searchText.isEmpty,
-                placeholder: "Search jobs, companies...",
-                textColor: Color.gray,
-                leadingOffset: 28,
-                font: Font.system(size: 16, weight: .light)
-            ))
-            .overlay(
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                        .font(.system(size: 18))
-                        .padding(.leading, 14)
-                        .padding(.bottom, 2)
-                    Spacer()
-                })
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-            )
-            .transition(.opacity)
-    }
-    
-    
-    private var filterButtons: some View {
-        HStack(spacing: 10) {
-            ToolTipButton(icon: "line.3.horizontal.decrease", tooltip: "Filter") {
-                //
-            }
-            
-            ToolTipButton(icon: "arrow.up.arrow.down", tooltip: "Sort") {
-                //
-            }
-        }
-        .padding(.trailing, 5)
+        TextField("", text: Binding(
+            get: { viewModel.searchText },
+            set: { viewModel.searchText = $0 }
+        ))
+        .font(.title3)
+        .foregroundColor(.black)
+        .padding(.leading, 44)
+        .padding(.trailing, 16)
+        .frame(height: 48)
+        .cornerRadius(8)
+        .containerRelativeFrame(.horizontal, { length, _ in return max(220, length / 3) })
+        .textFieldStyle(.plain)
+        .focusable(false)
+        .focused($isSearchFieldFocused)
+        .alignmentGuide(.firstTextBaseline, computeValue: { _ in 10})
+        .modifier(TextFieldPlaceholderStyle(
+            showPlaceHolder: viewModel.searchText.isEmpty,
+            placeholder: "Search jobs, companies...",
+            textColor: Color.gray,
+            leadingOffset: 28,
+            font: Font.system(size: 16, weight: .light)
+        ))
+        .overlay(
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.gray)
+                    .font(.system(size: 18))
+                    .padding(.leading, 14)
+                    .padding(.bottom, 2)
+                Spacer()
+            })
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+        )
+        .transition(.opacity)
     }
     
     
@@ -178,7 +173,7 @@ struct DashboardTopBarView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(isHovered ? Color.gray.opacity(0.6) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
-
+                
             }
             .buttonStyle(.plain)
             .onHover { hovering in
@@ -192,7 +187,8 @@ struct DashboardTopBarView: View {
         private var toolTip: some View {
             Text(tooltip)
                 .font(.system(size: 12, weight: .medium))
-                .frame(width: 40)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
                 .foregroundColor(.gray)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
@@ -208,24 +204,114 @@ struct DashboardTopBarView: View {
         }
         
     }
+}
+
+
+//MARK: - Schema Enum
+extension DashboardTopBarView {
     
-    
-    //MARK: - Schema Enum
     enum DashboardTopBarViewSchema {
         case searchField,
              searchFieldWithFilterAndSort,
              backButton,
-             backButtonWithJobEntryButton
+             backButtonWithJobEntryButton,
+             backButtonWithWebLinkAndEdit,
+             backButtonWithEdit,
+             backButtonWithDeleteAndConfirm
+        
+        var searchField: Bool {
+            switch self {
+            case .searchField, .searchFieldWithFilterAndSort: return true
+            default: return false
+            }
+        }
+        
+        var backButton: Bool {
+            switch self {
+            case .searchField, .searchFieldWithFilterAndSort: return false
+            default: return true
+            }
+        }
+        
+        var profilePicture: Bool {
+            return true
+        }
+        
+        var customButtons: [(icon: String, toolTip: String?, action: () -> Void)] {
+            switch self {
+                
+            case .searchFieldWithFilterAndSort:
+                return [
+                    (icon: "line.3.horizontal.decrease", toolTip: "Filter", action: {
+                        
+                    }),
+                    (icon: "arrow.up.arrow.down", toolTip: "Sort", action: {
+                        
+                    })
+                ]
+                
+            case .backButtonWithWebLinkAndEdit:
+                return [
+                    (icon: "arrow.up.right", toolTip: "Open Link", action: {
+                        
+                    }),
+                    (icon: "slider.horizontal.3", toolTip: "Edit", action: {
+                        
+                    })
+                ]
+            case .backButtonWithEdit:
+                return [
+                    (icon: "slider.horizontal.3", toolTip: "Edit", action: {
+                        
+                    })
+                ]
+                
+            default: return []
+            }
+        }
+        
     }
     
+}
+
+
+//MARK: - View Model
+extension DashboardTopBarView {
+    
+    @MainActor
+    final class ViewModel: ObservableObject {
+        
+        @Published var schemaStack: [DashboardTopBarViewSchema] = [.searchField]
+        
+        @Published var searchText: String = ""
+        
+        @Published var entryViewAddJobButtonEnabled: Bool = false
+        @Published var entryViewAddJobButtonPressed: Bool = false
+        
+        func backButtonTapped() {
+            guard schemaStack.count > 1 else { return }
+            schemaStack.removeLast()
+        }
+        
+        func addSchema(_ schema: DashboardTopBarViewSchema) {
+            schemaStack.append(schema)
+        }
+        
+        func resetSchemaStack() {
+            schemaStack = [.searchField]
+        }
+        
+    }
     
 }
+
+
 
 #Preview {
     ZStack {
         Color.blue
         
-        DashboardTopBarView.ToolTipButton(icon: "line.3.horizontal.decrease", tooltip: "Filter") {
+        DashboardTopBarView.ToolTipButton(icon: "arrow.up.right", tooltip: "Open Link") {
             //
         }
     } .frame(width: 200, height: 200)
