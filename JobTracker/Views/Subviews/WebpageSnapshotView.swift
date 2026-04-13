@@ -173,6 +173,25 @@ extension WebpageSnapshotView {
             }
         }
         
+        
+        public func getPageText() async throws -> String {
+            return try await withCheckedThrowingContinuation { continuation in
+                guard let webView else {
+                    continuation.resume(throwing: NSError(domain: "WebpageSnapshotView", code: 1, userInfo: [NSLocalizedDescriptionKey: "No WebView available"]))
+                    return
+                }
+                
+                webView.evaluateJavaScript("document.body.innerText") { (result, error) in
+                    guard let result = result as? String else {
+                        return continuation.resume(throwing: error ?? NSError(domain: "Failed to retrieve web page text!", code: 1))
+                    }
+                    
+                    continuation.resume(returning: result)
+                }
+                
+            }
+        }
+        
     }
     
 }

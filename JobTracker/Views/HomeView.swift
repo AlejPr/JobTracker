@@ -311,7 +311,7 @@ extension HomeView {
         
         
         func removeFromNavigationStack() {
-            withAnimation { navigationPathStack.removeLast() }
+            _ = withAnimation { navigationPathStack.removeLast() }
         }
         
     }

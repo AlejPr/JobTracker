@@ -80,8 +80,8 @@ struct JobEntryView: View {
                     
                     Spacer()
                     
-                    let isValid = isValidUrl(url: viewModel.listingLink)
-                    Button { viewModel.attemptAutofill() }
+                    let isEnabled = viewModel.autofillButtonDisabled ? false : isValidUrl(url: viewModel.listingLink)
+                    Button { viewModel.attemptAutofill(with: webPageSnapShotViewModel) }
                     label: {
                         Text("Autofill")
                             .font(.system(size: 14, weight: .medium))
@@ -89,10 +89,10 @@ struct JobEntryView: View {
                             .frame(height: 10)
                             .padding(10)
                             .padding(.bottom, 2)
-                            .background(isValid ? Color.accentColor : Color.gray.opacity(0.8))
+                            .background(isEnabled ? Color.accentColor : Color.gray.opacity(0.8))
                             .cornerRadius(5)
                     }
-                    .disabled(!isValid)
+                    .disabled(!isEnabled)
                     .buttonStyle(PressedOpacityButtonStyle())
                 }
                 
@@ -316,6 +316,7 @@ extension JobEntryView {
         @Published var expandedPickerId: String?
         @Published var showTooltip: Bool = false
         @Published var webViewIsExpanded: Bool = false
+        @Published var autofillButtonDisabled: Bool = false
         
 
         func saveNewListing(with dataContainer: SwiftDataContainer,_ snapshotViewModel: WebpageSnapshotView.ViewModel) async throws {
@@ -358,8 +359,20 @@ extension JobEntryView {
         }
         
         
-        func attemptAutofill() {
-            print("Autofill called")
+        func attemptAutofill(with snapshotViewModel: WebpageSnapshotView.ViewModel) {
+            withAnimation { autofillButtonDisabled = true }
+            Task {
+                do {
+                    let webPageText = try await snapshotViewModel.getPageText()
+                    print(webPageText)
+                } catch {
+                    print("Error, could not fetch webpage text! \(error)")
+                    
+                    await MainActor.run { [weak self] in
+                        withAnimation { self?.autofillButtonDisabled = false }
+                    }
+                }
+            }
         }
         
         
