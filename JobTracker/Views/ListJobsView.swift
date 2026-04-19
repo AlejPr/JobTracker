@@ -201,8 +201,8 @@ fileprivate struct JobListingView: View {
         var items: [(String, Color)] = [jobListing.schedule, jobListing.location]
             .compactMap { $0 }
             .map { ($0, Color.gray.opacity(0.1)) }
-        if let pay = jobListing.payRange {
-            items.append((formatPayRange(pay, jobListing.salaryType ?? .yearly), Color.blue.opacity(0.2)))
+        if let pay = jobListing.salaryRange {
+            items.append((formatSalaryRange(pay, jobListing.salaryType ?? .yearly), Color.blue.opacity(0.2)))
         }
         return items
     }
@@ -221,7 +221,7 @@ fileprivate struct JobListingView: View {
     }
     
     
-    private func formatPayRange(_ range: String,_ salaryType: SalaryType) -> String {
+    private func formatSalaryRange(_ range: String,_ salaryType: SalaryType) -> String {
         switch salaryType {
         case .yearly: return range
         case .monthly: return range + " / mo"

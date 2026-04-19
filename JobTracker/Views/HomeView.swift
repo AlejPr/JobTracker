@@ -15,7 +15,7 @@ public let sideBarDividerColor = Color(red: 227/255, green: 229/255, blue: 233/2
 struct HomeView: View {
     
     @StateObject private var viewModel: ViewModel
-    @StateObject private var dashboardViewModel: DashboardTopBarView.ViewModel
+    @StateObject private var dashboardViewModel: DashboardTopBarViewModel
     
     @FocusState private var isSearchFieldFocused: Bool
     
@@ -89,7 +89,7 @@ struct HomeView: View {
                             .navigationDestination(for: NavigationDestination.self) { destination in
                                 switch destination {
                                 case .dashboard:
-                                    Color.green
+                                    Color.red
                                     
                                 case .jobEntry:
                                     JobEntryView(geometryProxy: proxy)
@@ -109,7 +109,7 @@ struct HomeView: View {
                                 }
                             }
                     }
-                    .environment(\.topbarViewModel, dashboardViewModel)
+                    .environmentObject(dashboardViewModel)
                     .environment(\.appendNavigationPath, viewModel.appendToNavigationStack(_:animated:))
 
                 }
@@ -246,8 +246,8 @@ extension HomeView {
     @MainActor
     final class ViewModel: ObservableObject {
         
-        @Published var navigationPathStack: [NavigationDestination] = []
-        @Published var sideBarSelectedItem: SidebarItem = .dashboard
+        @Published var navigationPathStack: [NavigationDestination] = [.jobListings]
+        @Published var sideBarSelectedItem: SidebarItem = .jobListings
         @Published var shouldShowAddJobButton: Bool = true
         
         unowned let tbVM: DashboardTopBarView.ViewModel

@@ -50,9 +50,11 @@ struct DashboardTopBarView: View {
             }
             
             if !schema.customButtons.isEmpty {
-                ForEach(schema.customButtons, id: \.icon) { buttonSchema in
-                    ToolTipButton(icon: buttonSchema.icon, tooltip: buttonSchema.toolTip ?? "", action: buttonSchema.action)
-                        .padding(.trailing, 5)
+                ForEach(schema.customButtons, id: \.id) { buttonSchema in
+                    ToolTipButton(icon: buttonSchema.icon, tooltip: buttonSchema.toolTip ?? "", action: {
+                        viewModel.buttonPressed(with: buttonSchema.id)
+                    })
+                    .padding(.trailing, 5)
                 }
             }
             
@@ -237,36 +239,24 @@ extension DashboardTopBarView {
             return true
         }
         
-        var customButtons: [(icon: String, toolTip: String?, action: () -> Void)] {
+        var customButtons: [(id: String, icon: String, toolTip: String?)] {
             switch self {
-                
             case .searchFieldWithFilterAndSort:
                 return [
-                    (icon: "line.3.horizontal.decrease", toolTip: "Filter", action: {
-                        
-                    }),
-                    (icon: "arrow.up.arrow.down", toolTip: "Sort", action: {
-                        
-                    })
+                    (id: "Filter", icon: "line.3.horizontal.decrease", toolTip: "Filter"),
+                    (id: "Sort", icon: "arrow.up.arrow.down", toolTip: "Sort")
                 ]
-                
             case .backButtonWithWebLinkAndEdit:
                 return [
-                    (icon: "arrow.up.right", toolTip: "Open Link", action: {
-                        
-                    }),
-                    (icon: "slider.horizontal.3", toolTip: "Edit", action: {
-                        
-                    })
+                    (id: "Open Link", icon: "arrow.up.right", toolTip: "Open Link"),
+                    (id: "Edit", icon: "slider.horizontal.3", toolTip: "Edit")
                 ]
             case .backButtonWithEdit:
                 return [
-                    (icon: "slider.horizontal.3", toolTip: "Edit", action: {
-                        
-                    })
+                    (id: "Edit", icon: "slider.horizontal.3", toolTip: "Edit")
                 ]
-                
-            default: return []
+            default:
+                return []
             }
         }
         
@@ -288,6 +278,11 @@ extension DashboardTopBarView {
         @Published var entryViewAddJobButtonEnabled: Bool = false
         @Published var entryViewAddJobButtonPressed: Bool = false
         
+        var filterButtonPressed = { }
+        var sortButtonPressed = { }
+        var openLinkButtonPressed = { }
+        var editButtonPressed = { }
+        
         func backButtonTapped() {
             guard schemaStack.count > 1 else { return }
             schemaStack.removeLast()
@@ -301,10 +296,21 @@ extension DashboardTopBarView {
             schemaStack = [.searchField]
         }
         
+        func buttonPressed(with id: String) {
+            switch id {
+            case "Filter": filterButtonPressed()
+            case "Sort": sortButtonPressed()
+            case "Open Link": openLinkButtonPressed()
+            case "Edit": editButtonPressed()
+            default: break
+            }
+        }
+        
     }
     
 }
 
+typealias DashboardTopBarViewModel = DashboardTopBarView.ViewModel
 
 
 #Preview {
@@ -317,3 +323,4 @@ extension DashboardTopBarView {
     } .frame(width: 200, height: 200)
 
 }
+

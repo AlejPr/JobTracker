@@ -16,7 +16,7 @@ final class JobListing: Identifiable, Hashable, CustomStringConvertible {
     var jobURL: URL?
     var saveDataFilePath: String? = nil
     var location: String?
-    var payRange: String?
+    var salaryRange: String?
     var schedule: String?
     var notes: String?
     var requirements: String?
@@ -26,7 +26,7 @@ final class JobListing: Identifiable, Hashable, CustomStringConvertible {
     var applicationStatus: ApplicationStatus
     
     init(title: String, company: String, jobURL: URL?,
-         location: String? = nil, payRange: String? = nil, schedule: String? = nil,
+         location: String? = nil, salaryRange: String? = nil, schedule: String? = nil,
          notes: String? = nil, requirements: String? = nil, jobDescription: String? = nil,
          workLocationType: WorkLocationType? = nil, salaryType: SalaryType? = nil,
          date: Date = Date(), applicationStatus: ApplicationStatus = .applied) {
@@ -35,7 +35,7 @@ final class JobListing: Identifiable, Hashable, CustomStringConvertible {
         self.timeStampApplied = date
         self.location = location
         self.jobURL = jobURL
-        self.payRange = payRange
+        self.salaryRange = salaryRange
         self.schedule = schedule
         self.workLocationType = workLocationType
         self.salaryType = salaryType
@@ -44,6 +44,32 @@ final class JobListing: Identifiable, Hashable, CustomStringConvertible {
         self.jobDescription = jobDescription
         self.requirements = requirements
     }
+    
+    
+    init(from LLMResponse: String) {
+        self.title = ""
+        self.company = ""
+        self.timeStampApplied = Date()
+        self.applicationStatus = .applied
+
+        guard let data = LLMResponse.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return }
+        
+        self.title   = json["jobTitle"]    as? String ?? "Unknown Title"
+        self.company = json["companyName"] as? String ?? "Unknown Company"
+
+        self.location       = json["location"]        as? String
+        self.salaryRange    = json["salary"]          as? String
+        self.requirements   = json["requirements"]    as? String
+        self.jobDescription = json["jobDescription"]  as? String
+        self.schedule       = json["schedule"]        as? String
+
+        let isRemote = json["remote"] as? Bool ?? false
+        let isHybrid = json["hybrid"] as? Bool ?? false
+        self.workLocationType = isRemote ? .remote : isHybrid ? .hybrid : .onSite
+    }
+    
     
     var description: String { return "Joblisting for role \(title) at \(company)."}
     
@@ -117,7 +143,7 @@ extension JobListing {
             company: "Government",
             jobURL: URL(string: "https://apple.com")!,
             location: "Florida",
-            payRange: "$1k",
+            salaryRange: "$1k",
             salaryType: .monthly,
             applicationStatus: .accepted
         ),
@@ -126,7 +152,7 @@ extension JobListing {
             company: "Apple",
             jobURL: URL(string: "https://apple.com")!,
             location: "Cupertino, California",
-            payRange: "$150-200k",
+            salaryRange: "$150-200k",
             schedule: "Full-Time",
             notes: "REALLY want this job!!!!! Apple Campus is very beautiful.\nAlso 996 work schedule",
             date: makeDate(year: 2026, month: 2, day: 1, hour: 11),
@@ -137,7 +163,7 @@ extension JobListing {
             company: "Microsoft",
             jobURL: URL(string: "https://microsoft.com")!,
             location: "Redmond, Washington",
-            payRange: "$120-180k",
+            salaryRange: "$120-180k",
             schedule: "Full-Time",
             date: makeDate(year: 2026, month: 2, day: 1, hour: 12),
             applicationStatus: .interviewing
@@ -154,7 +180,7 @@ extension JobListing {
             company: "Google",
             jobURL: URL(string: "https://google.com")!,
             location: "California",
-            payRange: "Not Provided",
+            salaryRange: "Not Provided",
             schedule: "Full-Time",
             date: makeDate(year: 2026, month: 1, day: 15, hour: 11),
             applicationStatus: .rejected
@@ -164,7 +190,7 @@ extension JobListing {
             company: "Amazon",
             jobURL: URL(string: "https://amazon.com")!,
             location: "Austin, Texas",
-            payRange: "$140-180k",
+            salaryRange: "$140-180k",
             schedule: "Full-Time",
             date: makeDate(year: 2026, month: 1, day: 15, hour: 12),
             applicationStatus: .ghosted
@@ -174,7 +200,7 @@ extension JobListing {
             company: "Apple",
             jobURL: URL(string: "https://apple.com")!,
             location: "Cupertino, California",
-            payRange: "$120-180k",
+            salaryRange: "$120-180k",
             schedule: "Full-Time",
             date: makeDate(year: 2026, month: 1, day: 15, hour: 13),
             applicationStatus: .ghosted
@@ -184,7 +210,7 @@ extension JobListing {
             company: "Amazon",
             jobURL: URL(string: "https://amazon.com")!,
             location: "Hell",
-            payRange: "$12/hr",
+            salaryRange: "$12/hr",
             schedule: "Suicidal",
             date: makeDate(year: 2026, month: 1, day: 2, hour: 12),
             applicationStatus: .offerPending
@@ -195,7 +221,7 @@ extension JobListing {
         title: "Software Engineer III, iOS Video",
         company: "Google", jobURL: URL(string: "https://www.google.com/about/careers/applications/jobs/results/129091183585436358-software-engineer-iii-ios-video?q=ios"),
         location: "Mountain View, CA, USA",
-        payRange: "$147,000-$211,000",
+        salaryRange: "$147,000-$211,000",
         schedule: "Full Time",
         notes: "N/A",
         requirements: "Minimum qualifications:\n* Bachelor's degree or equivalent practical experience.\n* 2 years of experience with iOS application development.\n* 2 years of experience with software development in one or more programming languages (Swift, Objective-C), or 1 year of experience with an advanced degree.\nPreferred qualifications:\n* Master's degree or PhD in Computer Science or related technical fields.\n* Experience achieving low-latency video streaming experiences at large-scale.\n* Experience with iOS mobile app development, with working on large-scale apps.\n* Experience with audio visual foundations, such as video playback and video composition.\n* Familiarity with video codecs, containers, and processing.",

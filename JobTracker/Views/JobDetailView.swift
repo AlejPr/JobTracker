@@ -12,6 +12,7 @@ import SwiftData
 struct JobDetailView: View {
     
     @StateObject private var viewModel: ViewModel
+    @EnvironmentObject var dashboardViewModel: DashboardTopBarViewModel
 
     @State var webViewIsExpanded: Bool = false
     @State var currentPDFZoom: CGFloat = 1
@@ -67,6 +68,9 @@ struct JobDetailView: View {
                 )
                 .padding(20)
             }
+        }
+        .onAppear {
+            dashboardViewModel.openLinkButtonPressed = viewModel.openListingLink
         }
     }
     
@@ -129,7 +133,7 @@ struct JobDetailView: View {
                         LabeledAttribute(
                             title: "Salary Range",
                             text: {
-                                guard let pay = jobListing.payRange else { return "Not Provided" }
+                                guard let pay = jobListing.salaryRange else { return "Not Provided" }
                                 if let salaryType = jobListing.salaryType {
                                     return "\(pay) (\(salaryType.rawValue))"
                                 }
@@ -287,6 +291,11 @@ extension JobDetailView {
                 NSLog("[JobDetailView] Could not load PDF data for \(filePath): \(error)")
                 return nil
             }
+        }
+        
+        func openListingLink() {
+            guard let url = jobListing.jobURL else { return }
+            NSWorkspace.shared.open(url)
         }
         
     }

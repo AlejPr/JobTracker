@@ -9,7 +9,7 @@ import SwiftData
 @main
 struct JobTrackerApp: App {
     
-    let sharedModelContainer = SwiftDataContainer(true)
+    let sharedModelContainer = SwiftDataContainer(false)
 
     var body: some Scene {
         WindowGroup {

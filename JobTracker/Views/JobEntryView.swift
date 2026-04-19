@@ -15,7 +15,7 @@ struct JobEntryView: View {
     @StateObject private var webPageSnapShotViewModel = WebpageSnapshotView.ViewModel()
     
     @Environment(SwiftDataContainer.self) private var dataContainer
-    @Environment(\.topbarViewModel) var tbVM
+    @EnvironmentObject var tbVM: DashboardTopBarViewModel
     @Environment(\.customDismiss) var dismiss
         
     let geometryProxy: GeometryProxy
@@ -81,37 +81,24 @@ struct JobEntryView: View {
                     Spacer()
                     
                     let isEnabled = viewModel.autofillButtonDisabled ? false : isValidUrl(url: viewModel.listingLink)
-                    Button { viewModel.attemptAutofill(with: webPageSnapShotViewModel) }
-                    label: {
-                        Text("Autofill")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(Color.white)
-                            .frame(height: 10)
-                            .padding(10)
-                            .padding(.bottom, 2)
-                            .background(isEnabled ? Color.accentColor : Color.gray.opacity(0.8))
-                            .cornerRadius(5)
+                    AutofillButton(isEnabled: isEnabled, inProgress: viewModel.autofillInProgress) {
+                        viewModel.attemptAutofill(with: webPageSnapShotViewModel)
                     }
-                    .disabled(!isEnabled)
-                    .buttonStyle(PressedOpacityButtonStyle())
                 }
                 
-                TextField(" ", text: $viewModel.listingLink)
-                    .textFieldStyle(CustomTextFieldStyle())
-                    .modifier(TextFieldPlaceholderStyle(
-                        showPlaceHolder: viewModel.listingLink.isEmpty,
-                        placeholder: "https://example.com/job-listing",
-                        textColor: Color.gray
-                    ))
-                    .background(sideBarColor)
+                StyledTextField(placeHolderText: "https://example.com/job-listing",
+                                axis: .horizontal,
+                                textFieldText: $viewModel.listingLink)
             }
             
             LabeledTextField(
                 header: "Job Title",
                 placeHolderText: "macOS Developer",
                 required: true,
+                autofillInProgress: viewModel.autofillInProgress,
                 textFieldText: $viewModel.jobTitle
             )
+            
             .onChange(of: viewModel.jobTitle) { _, _ in
                 checkCanAddJob()
             }
@@ -121,6 +108,7 @@ struct JobEntryView: View {
                     header: "Company Name",
                     placeHolderText: "Apple Inc.",
                     required: true,
+                    autofillInProgress: viewModel.autofillInProgress,
                     textFieldText: $viewModel.companyName
                 )
                 .onChange(of: viewModel.companyName) { _, _ in
@@ -147,6 +135,7 @@ struct JobEntryView: View {
                 LabeledTextField(
                     header: "Location",
                     placeHolderText: "Cupertino, CA",
+                    autofillInProgress: viewModel.autofillInProgress,
                     textFieldText: $viewModel.location
                 )
                 
@@ -171,6 +160,7 @@ struct JobEntryView: View {
                     header: "Salary Range",
                     placeHolderText: "$120k - 150k",
                     disabled: viewModel.salaryNotListed,
+                    autofillInProgress: viewModel.autofillInProgress,
                     textFieldText: $viewModel.salaryRange
                 )
                 
@@ -200,6 +190,7 @@ struct JobEntryView: View {
                 header: "Notes",
                 placeHolderText: "Contract Job, 18 months only",
                 axis: .vertical,
+                autofillInProgress: viewModel.autofillInProgress,
                 textFieldText: $viewModel.notes
             )
             
@@ -207,6 +198,7 @@ struct JobEntryView: View {
                 header: "Requirements",
                 placeHolderText: "3 Years of experience in SwiftUI",
                 axis: .vertical,
+                autofillInProgress: viewModel.autofillInProgress,
                 textFieldText: $viewModel.requirements
             )
             
@@ -214,6 +206,7 @@ struct JobEntryView: View {
                 header: "Description",
                 placeHolderText: "Develop great applications for MacOS devices!",
                 axis: .vertical,
+                autofillInProgress: viewModel.autofillInProgress,
                 textFieldText: $viewModel.jobDescription
             )
             
@@ -317,6 +310,7 @@ extension JobEntryView {
         @Published var showTooltip: Bool = false
         @Published var webViewIsExpanded: Bool = false
         @Published var autofillButtonDisabled: Bool = false
+        @Published var autofillInProgress: Bool = false
         
 
         func saveNewListing(with dataContainer: SwiftDataContainer,_ snapshotViewModel: WebpageSnapshotView.ViewModel) async throws {
@@ -325,7 +319,7 @@ extension JobEntryView {
                 company: companyName,
                 jobURL: URL(string: listingLink),
                 location: location.isEmpty ? nil : location,
-                payRange: salaryRange.isEmpty ? nil : location,
+                salaryRange: salaryRange.isEmpty ? nil : location,
                 notes: notes.isEmpty ? nil : notes,
                 requirements: requirements.isEmpty ? nil : requirements,
                 jobDescription: jobDescription.isEmpty ? nil : jobDescription,
@@ -359,17 +353,33 @@ extension JobEntryView {
         }
         
         
+        private func updateFields(with listing: JobListing) {
+            jobTitle = listing.title
+            companyName = listing.company
+            location = listing.location ?? location
+            workLocationType = listing.workLocationType ?? workLocationType
+            salaryRange = listing.salaryRange ?? salaryRange
+            salaryType = listing.salaryType ?? salaryType
+            requirements = listing.requirements ?? requirements
+            jobDescription = listing.jobDescription ?? jobDescription
+        }
+        
+        
+        //MARK: - Autofill
         func attemptAutofill(with snapshotViewModel: WebpageSnapshotView.ViewModel) {
-            withAnimation { autofillButtonDisabled = true }
+            withAnimation { autofillInProgress = true }
             Task {
                 do {
                     let webPageText = try await snapshotViewModel.getPageText()
-                    print(webPageText)
-                } catch {
-                    print("Error, could not fetch webpage text! \(error)")
-                    
+                    let response = try await AutofillServiceProvider.attemptAutofill(with: webPageText)
                     await MainActor.run { [weak self] in
-                        withAnimation { self?.autofillButtonDisabled = false }
+                        self?.updateFields(with: response)
+                        withAnimation { self?.autofillInProgress = false }
+                    }
+                } catch {
+                    print("[JobEntryView] Error, could not complete autofill request! \(error)")
+                    await MainActor.run { [weak self] in
+                        withAnimation { self?.autofillInProgress = false }
                     }
                 }
             }
@@ -404,10 +414,12 @@ extension JobEntryView {
         var axis: Axis = .horizontal
         var disabled: Bool = false
         var required: Bool = false
+        var autofillInProgress: Bool = false
         @Binding var textFieldText: String
         
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
+                
                 HStack(spacing: 0) {
                     Text(header)
                         .font(.system(size: 14, weight: .medium))
@@ -420,25 +432,49 @@ extension JobEntryView {
                     }
                 }
                 
-                TextField(" ", text: $textFieldText, axis: axis)
-                    .textFieldStyle(CustomTextFieldStyle())
-                    .modifier(TextFieldPlaceholderStyle(
-                        showPlaceHolder: textFieldText.isEmpty,
-                        placeholder: placeHolderText,
-                        textColor: Color.gray
-                    ))
-                    .background(sideBarColor)
-                    .disabled(disabled)
-                    .overlay {
-                        if disabled {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.gray.opacity(0.1))
-                        }
-                    }
+                StyledTextField(placeHolderText: placeHolderText,
+                                axis: axis,
+                                disabled: disabled,
+                                autoFillInProgress: autofillInProgress,
+                                textFieldText: $textFieldText)
             }
         }
     }
     
+    
+    private struct StyledTextField: View {
+        
+        let placeHolderText: String
+        var axis: Axis
+        var disabled: Bool = false
+        var autoFillInProgress: Bool = false
+        @Binding var textFieldText: String
+        
+        var body: some View {
+            TextField(" ", text: $textFieldText, axis: axis)
+                .textFieldStyle(CustomTextFieldStyle())
+                .modifier(TextFieldPlaceholderStyle(
+                    showPlaceHolder: textFieldText.isEmpty,
+                    placeholder: placeHolderText,
+                    textColor: Color.gray
+                ))
+                .background(sideBarColor)
+                .disabled(disabled || autoFillInProgress)
+            
+                .overlay {
+                    if disabled || autoFillInProgress {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.gray.opacity(0.4))
+                        
+                        if autoFillInProgress {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.white.opacity(0.4))
+                                .shimmering(bandSize: 0.5)
+                        }}
+                }
+        }
+        
+    }
     
     private struct CustomTextFieldStyle: TextFieldStyle {
         func _body(configuration: TextField<Self._Label>) -> some View {
@@ -499,6 +535,39 @@ extension JobEntryView {
                 isVisible: true,
                 disabled: !isEnabled
             )
+        }
+    }
+    
+    
+    private struct AutofillButton: View {
+        let isEnabled: Bool
+        let inProgress: Bool
+        let action: () -> Void
+
+        var body: some View {
+            Button(action: action) {
+                ZStack {
+                    Text("Autofill")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(Color.white)
+                        .frame(height: 10)
+                        .padding(10)
+                        .padding(.bottom, 2)
+                        .background((isEnabled && !inProgress) ? Color.accentColor : Color.gray.opacity(0.8))
+                        .cornerRadius(5)
+                        
+                        .overlay {
+                            if inProgress {
+                                RoundedRectangle(cornerRadius: 5)
+                                    .fill(Color.white.opacity(0.4))
+                                    .shimmering(bandSize: 0.5)
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                }
+            }
+            .disabled(!isEnabled || inProgress)
+            .buttonStyle(PressedOpacityButtonStyle())
         }
     }
     

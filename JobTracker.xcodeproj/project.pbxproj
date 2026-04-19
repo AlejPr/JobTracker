@@ -10,6 +10,7 @@
 		A910542A2F3C8813009AC6D0 /* TODO.md in Sources */ = {isa = PBXBuildFile; fileRef = A91054292F3C880D009AC6D0 /* TODO.md */; };
 		A941D1BC2F8CED6B0062FEF2 /* ChatGPTSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A941D1BB2F8CED6B0062FEF2 /* ChatGPTSwift */; };
 		A941D1BF2F8CEDA50062FEF2 /* ChatGPTSwift in Frameworks */ = {isa = PBXBuildFile; productRef = A941D1BE2F8CEDA50062FEF2 /* ChatGPTSwift */; };
+		A97610FF2F95396000F8B9DB /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = A97610FD2F95395800F8B9DB /* Secrets.xcconfig */; };
 		A9F354AD2F38428E004BF7A6 /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = A9F354AB2F384289004BF7A6 /* README.md */; };
 /* End PBXBuildFile section */
 
@@ -32,11 +33,22 @@
 
 /* Begin PBXFileReference section */
 		A91054292F3C880D009AC6D0 /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
+		A97610FD2F95395800F8B9DB /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		A9DF33592F2E6CA9003A7011 /* JobTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JobTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9DF33682F2E6CAA003A7011 /* JobTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JobTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9DF33722F2E6CAA003A7011 /* JobTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JobTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9F354AB2F384289004BF7A6 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A97611012F953BD300F8B9DB /* Exceptions for "JobTracker" folder in "JobTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A9DF33582F2E6CA9003A7011 /* JobTracker */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A97AF15A2F8A194B0096B1D8 /* Old */ = {
@@ -46,6 +58,9 @@
 		};
 		A9DF335B2F2E6CA9003A7011 /* JobTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A97611012F953BD300F8B9DB /* Exceptions for "JobTracker" folder in "JobTracker" target */,
+			);
 			path = JobTracker;
 			sourceTree = "<group>";
 		};
@@ -102,6 +117,7 @@
 				A91054292F3C880D009AC6D0 /* TODO.md */,
 				A97AF15A2F8A194B0096B1D8 /* Old */,
 				A9DF335B2F2E6CA9003A7011 /* JobTracker */,
+				A97610FD2F95395800F8B9DB /* Secrets.xcconfig */,
 				A9DF336B2F2E6CAA003A7011 /* JobTrackerTests */,
 				A9DF33752F2E6CAA003A7011 /* JobTrackerUITests */,
 				A941D1BD2F8CEDA50062FEF2 /* Frameworks */,
@@ -245,6 +261,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A97610FF2F95396000F8B9DB /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,6 +323,7 @@
 /* Begin XCBuildConfiguration section */
 		A9DF337A2F2E6CAA003A7011 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A97610FD2F95395800F8B9DB /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -369,6 +387,7 @@
 		};
 		A9DF337B2F2E6CAA003A7011 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A97610FD2F95395800F8B9DB /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -444,6 +463,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JobTracker/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -486,6 +506,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = JobTracker/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
