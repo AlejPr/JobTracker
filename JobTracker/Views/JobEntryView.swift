@@ -269,6 +269,7 @@ struct JobEntryView: View {
                 await MainActor.run {
                     withAnimation {
                         tbVM.entryViewAddJobButtonPressed = false
+                        tbVM.backButtonTapped()
                         dismiss()
                     }
                 }

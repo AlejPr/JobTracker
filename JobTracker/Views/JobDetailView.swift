@@ -132,13 +132,7 @@ struct JobDetailView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         LabeledAttribute(
                             title: "Salary Range",
-                            text: {
-                                guard let pay = jobListing.salaryRange else { return "Not Provided" }
-                                if let salaryType = jobListing.salaryType {
-                                    return "\(pay) (\(salaryType.rawValue))"
-                                }
-                                return pay
-                            }()
+                            text: jobListing.salaryRange ?? "Not Provided"
                         )
                         
                         LabeledAttribute(

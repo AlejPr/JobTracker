@@ -112,12 +112,61 @@ extension JobListing {
         case remote = "Remote"
     }
     
+}
+
+
+extension JobListing {
+    
     enum SalaryType: String, Codable, CaseIterable {
-        case yearly = "Yearly"
-        case monthly = "Monthly"
+        
+        case yearly   = "Yearly"
+        case monthly  = "Monthly"
         case biWeekly = "Bi-Weekly"
-        case weekly = "Weekly"
-        case hourly = "Hourly"
+        case weekly   = "Weekly"
+        case hourly   = "Hourly"
+        
+        var suffix: String {
+            switch self {
+            case .yearly:   return "/Year"
+            case .monthly:  return "/Month"
+            case .biWeekly: return "/Bi-Weekly"
+            case .weekly:   return "/Week"
+            case .hourly:   return "/Hour"
+            }
+        }
+        
+        var aliases: [String] {
+            switch self {
+            case .yearly:   return ["year", "yearly", "annual", "annually", "yr"]
+            case .monthly:  return ["month", "monthly", "mo"]
+            case .biWeekly: return ["bi-weekly", "biweekly", "bi weekly", "bi-week", "biweek"]
+            case .weekly:   return ["week", "weekly", "wk"]
+            case .hourly:   return ["hour", "hourly", "hr", "h"]
+            }
+        }
+        
+        static func stringToTypes(_ s: String) -> (String, SalaryType)? {
+            guard let slashIndex = s.lastIndex(of: "/") else { return nil }
+            
+            let salaryPart = String(s[s.startIndex..<slashIndex]).trimmingCharacters(in: .whitespaces)
+            let periodPart = String(s[s.index(after: slashIndex)...]).trimmingCharacters(in: .whitespaces).lowercased()
+            
+            guard !salaryPart.isEmpty, !periodPart.isEmpty else { return nil }
+            
+            for type in SalaryType.allCases {
+                if type.aliases.contains(where: { periodPart.hasPrefix($0) }) {
+                    return (salaryPart, type)
+                }
+            }
+            
+            return nil
+        }
+        
+        static func TypesToString(_ s: String, _ st: SalaryType) -> String? {
+            let trimmed = s.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return nil }
+            return "\(trimmed)\(st.suffix)"
+        }
     }
     
 }
