@@ -46,27 +46,48 @@ struct ListJobsView: View {
     }
     
     private func groupJobListingsByDate(_ listings:[JobListing]) -> [[JobListing]] {
-        let currentDate = Date()
-        var res = [[JobListing]]()
-        var curr = [JobListing]()
+        var today = [JobListing]()
+        var thisWeek = [JobListing]()
+        var thisMonth = [JobListing]()
+        var older = [[JobListing]]()
+        var currentGroup = [JobListing]()
         
         for listing in listings {
-            //Last 7 days
-            if listing.timeStampApplied >= currentDate.addingTimeInterval(-604800) { curr.append(listing) }
-            
-            else {
-                if let last = curr.last, !Calendar.current.isDate(last.timeStampApplied, inSameDayAs: listing.timeStampApplied) {
-                    res.append(curr)
-                    curr = []
+            switch DateGroupInterval.classify(listing.timeStampApplied) {
+            case .today: today.append(listing)
+            case .thisWeek: thisWeek.append(listing)
+            case .thisMonth: thisMonth.append(listing)
+            case .older:
+                if let last = currentGroup.last,
+                   !Calendar.current.isDate(last.timeStampApplied, inSameDayAs: listing.timeStampApplied) {
+                    older.append(currentGroup)
+                    currentGroup = []
                 }
-                
-                curr.append(listing)
+                currentGroup.append(listing)
             }
         }
-        
-        if !curr.isEmpty { res.append(curr) }
-        return res
+
+        if !currentGroup.isEmpty { older.append(currentGroup) }
+
+        return [today, thisWeek, thisMonth].filter { !$0.isEmpty } + older
     }
+    
+    
+    enum DateGroupInterval: String {
+        case today = "Today"
+        case thisWeek = "This Week"
+        case thisMonth = "This Month"
+        case older
+        
+        static func classify(_ date: Date, relativeTo now: Date = Date()) -> DateGroupInterval {
+            let calendar = Calendar.current
+            if calendar.isDateInToday(date)              { return .today }
+            if date >= now.addingTimeInterval(-604_800)  { return .thisWeek }
+            if date >= now.addingTimeInterval(-2_592_000) { return .thisMonth }
+            return .older
+        }
+    }
+    
     
 }
 
@@ -76,14 +97,12 @@ fileprivate struct JobListingGroup: View {
     
     var jobListings: [JobListing]
     var jobListingTapped: (JobListing) -> Void
-    var thisWeek: Bool {
-        jobListings.first!.timeStampApplied >= Date().addingTimeInterval(-604800)
-    }
+    var dgClass: dgInterval { dgInterval.classify(jobListings.first!.timeStampApplied) }
     
     var body: some View {
         
         VStack(alignment: .leading, spacing: 8) {
-            Text(thisWeek ? "This Week" : headerDate )
+            Text(dgClass == .older ? headerDate : dgClass.rawValue)
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(Color(red: 75/255, green: 85/255, blue: 99/255))
                 .padding(.leading, 30)
@@ -202,7 +221,7 @@ fileprivate struct JobListingView: View {
             .compactMap { $0 }
             .map { ($0, Color.gray.opacity(0.1)) }
         if let pay = jobListing.salaryRange {
-            items.append((formatSalaryRange(pay, jobListing.salaryType ?? .yearly), Color.blue.opacity(0.2)))
+            items.append((formatSalaryRange(pay.replacingOccurrences(of: "/Year", with: ""), jobListing.salaryType ?? .yearly), Color.blue.opacity(0.2)))
         }
         return items
     }
@@ -265,6 +284,7 @@ fileprivate class CustomDateFormatter: DateFormatter, @unchecked Sendable {
 }
 
 fileprivate let dateFormatter = CustomDateFormatter()
+fileprivate typealias dgInterval = ListJobsView.DateGroupInterval
 
 fileprivate struct PreviewStruct: View {
     let empty: Bool

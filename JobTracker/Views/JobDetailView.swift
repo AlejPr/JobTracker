@@ -13,6 +13,7 @@ struct JobDetailView: View {
     
     @StateObject private var viewModel: ViewModel
     @EnvironmentObject var dashboardViewModel: DashboardTopBarViewModel
+    @Environment(SwiftDataContainer.self) private var dataContainer
 
     @State var webViewIsExpanded: Bool = false
     @State var currentPDFZoom: CGFloat = 1
@@ -67,6 +68,7 @@ struct JobDetailView: View {
                     frameSize: 54
                 )
                 .padding(20)
+                                
             }
         }
         .onAppear {
@@ -137,11 +139,11 @@ struct JobDetailView: View {
                         
                         LabeledAttribute(
                             title: "Schedule",
-                            text: {
-                                var parts: [String] = []
-                                if let schedule = jobListing.schedule { parts.append(schedule) }
-                                if let workType = jobListing.workLocationType { parts.append(workType.rawValue) }
-                                return parts.isEmpty ? "Not Provided" : parts.joined(separator: " · ")
+                            text: { return "Full-Time"
+                                //var parts: [String] = []
+                                //if let schedule = jobListing.schedule { parts.append(schedule) }
+                                //if let workType = jobListing.workLocationType { parts.append(workType.rawValue) }
+                                //return parts.isEmpty ? "Not Provided" : parts.joined(separator: " · ")
                             }()
                         )
                     }
@@ -302,5 +304,6 @@ extension JobDetailView {
         JobDetailView(jobListing: JobListing.realJobListingSample, geometryProxy: proxy)
     }
     .frame(width: 900, height: 700)
+    .environmentObject(DashboardTopBarViewModel())
 }
 

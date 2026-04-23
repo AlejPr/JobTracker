@@ -204,7 +204,7 @@ extension JobListing {
             salaryRange: "$150-200k",
             schedule: "Full-Time",
             notes: "REALLY want this job!!!!! Apple Campus is very beautiful.\nAlso 996 work schedule",
-            date: makeDate(year: 2026, month: 2, day: 1, hour: 11),
+            date: makeDate(year: 2026, month: 4, day: 2, hour: 11),
             applicationStatus: .rejected
         ),
         JobListing(
@@ -214,8 +214,8 @@ extension JobListing {
             location: "Redmond, Washington",
             salaryRange: "$120-180k",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 2, day: 1, hour: 12),
-            applicationStatus: .interviewing
+            date: makeDate(year: 2026, month: 4, day: 2, hour: 12),
+            applicationStatus: .ghosted
         ),
         JobListing(
             title: "Weird Job",
@@ -231,7 +231,7 @@ extension JobListing {
             location: "California",
             salaryRange: "Not Provided",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 1, day: 15, hour: 11),
+            date: makeDate(year: 2026, month: 3, day: 15, hour: 11),
             applicationStatus: .rejected
         ),
         JobListing(
@@ -241,7 +241,7 @@ extension JobListing {
             location: "Austin, Texas",
             salaryRange: "$140-180k",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 1, day: 15, hour: 12),
+            date: makeDate(year: 2026, month: 3, day: 15, hour: 12),
             applicationStatus: .ghosted
         ),
         JobListing(
@@ -251,7 +251,7 @@ extension JobListing {
             location: "Cupertino, California",
             salaryRange: "$120-180k",
             schedule: "Full-Time",
-            date: makeDate(year: 2026, month: 1, day: 15, hour: 13),
+            date: makeDate(year: 2026, month: 3, day: 15, hour: 13),
             applicationStatus: .ghosted
         ),
         JobListing(

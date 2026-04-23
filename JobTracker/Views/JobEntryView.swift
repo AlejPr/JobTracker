@@ -321,6 +321,7 @@ extension JobEntryView {
                 jobURL: URL(string: listingLink),
                 location: location.isEmpty ? nil : location,
                 salaryRange: salaryRange.isEmpty ? nil : salaryRange,
+                schedule: "Full-Time",
                 notes: notes.isEmpty ? nil : notes,
                 requirements: requirements.isEmpty ? nil : requirements,
                 jobDescription: jobDescription.isEmpty ? nil : jobDescription,

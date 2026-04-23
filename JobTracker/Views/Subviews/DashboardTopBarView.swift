@@ -101,7 +101,7 @@ extension DashboardTopBarView {
     
     private var profileIcon: some View {
         Button(action: onSettingsTapped) {
-            Text("JE")
+            Text("AP")
                 .font(.system(size: 24, weight: .regular))
                 .foregroundColor(Color.white)
         }
