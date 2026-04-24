@@ -17,4 +17,5 @@ At the moment that's all it does. I plan to add data analysis tools to visualize
 I'm using ChatGPT 5.2 nano to filter webpage content. The application is built using SwiftUI and MVVM architecture. Using Apple's WKWebView class, it's possible to load pages inside of the application and convert them to text. The text is then fed to GPT nano which parses relevant data from the webpage and returns it as a JSON object. WKWebView also supports saving to PDFs.
 
 ## Demo
-![Demo](demovideo.mp4)
+
+https://github.com/user-attachments/assets/f01005ae-b3ed-4796-871c-98baa40dd677
