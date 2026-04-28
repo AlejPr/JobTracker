@@ -21,3 +21,5 @@
 - Make text selectable on jobdetailview
 - Improve PDF Saving resolution
 - Undo button for LLM Autofill
+- Fix scrollview position moving because of lazy vstack
+

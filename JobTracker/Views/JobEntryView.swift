@@ -18,6 +18,8 @@ struct JobEntryView: View {
     @EnvironmentObject var tbVM: DashboardTopBarViewModel
     @Environment(\.customDismiss) var dismiss
         
+    @FocusState private var isListingLinkFocused: Bool
+    
     let geometryProxy: GeometryProxy
     
     private var isCompact: Bool { geometryProxy.size.width < 900 }
@@ -36,7 +38,10 @@ struct JobEntryView: View {
         }
         .background(Color.white)
         .onTapGesture { viewModel.dismissOverlays() }
-        .onAppear { tbVM.entryViewAddJobButtonEnabled = false }
+        .onAppear {
+            tbVM.entryViewAddJobButtonEnabled = false
+            isListingLinkFocused = true
+        }
         .onChange(of: tbVM.entryViewAddJobButtonPressed) { _, newValue in addJobButtonPressed(newValue) }
     }
     
@@ -89,6 +94,8 @@ struct JobEntryView: View {
                 StyledTextField(placeHolderText: "https://example.com/job-listing",
                                 axis: .horizontal,
                                 textFieldText: $viewModel.listingLink)
+                    .focused($isListingLinkFocused)
+                
             }
             
             LabeledTextField(

@@ -101,8 +101,9 @@ fileprivate struct JobListingGroup: View {
     
     var body: some View {
         
-        VStack(alignment: .leading, spacing: 8) {
-            Text(dgClass == .older ? headerDate : dgClass.rawValue)
+        LazyVStack(alignment: .leading, spacing: 8) {
+            let headertext = dgClass == .older ? headerDate : dgClass.rawValue
+            Text(headertext + " - \(jobListings.count)")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(Color(red: 75/255, green: 85/255, blue: 99/255))
                 .padding(.leading, 30)
