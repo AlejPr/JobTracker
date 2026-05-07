@@ -17,6 +17,7 @@ struct JobDetailView: View {
 
     @State var webViewIsExpanded: Bool = false
     @State var currentPDFZoom: CGFloat = 1
+    @State private var expandedPickerId: String? = nil
     
     var geometryProxy: GeometryProxy
     private var isCompact: Bool { geometryProxy.size.width < 900 }
@@ -99,60 +100,90 @@ struct JobDetailView: View {
         VStack(spacing: 15) {
             
             //Main Detail View
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    let split = jobListing.company.split(separator: " ")
-                    let companyAbbreviation: String = {
-                        if split.count > 1 { return "\(split[0].prefix(1).uppercased() + split[1].prefix(1).uppercased())" }
-                        return jobListing.company.prefix(2).uppercased()
-                    }()
-                    
-                    Text(companyAbbreviation)
-                        .font(Font.system(size: 30, weight: .medium))
-                        .foregroundStyle(.blue)
-                        .frame(width: 80, height: 80)
-                        .background(Color.blue.opacity(0.2))
-                        .cornerRadius(10)
-                    
-                    LabeledAttribute(title: jobListing.title, text: jobListing.company,
-                                     titleFont: .largeTitle.bold(), titleStyle: .black,
-                                     textFont: .title)
-                    .padding(.leading, 20)
-                    
-                }
-                .padding(.bottom, 15)
+            ZStack(alignment: .topTrailing) {
                 
-                HStack() {
-                    VStack(alignment: .leading, spacing: 15) {
-                        LabeledAttribute(title: "Applied", text: viewModel.formattedDate)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        let split = jobListing.company.split(separator: " ")
+                        let companyAbbreviation: String = {
+                            if split.count > 1 { return "\(split[0].prefix(1).uppercased() + split[1].prefix(1).uppercased())" }
+                            return jobListing.company.prefix(2).uppercased()
+                        }()
                         
-                        LabeledAttribute(title: "Location", text: jobListing.location ?? "Not Provided")
+                        Text(companyAbbreviation)
+                            .font(Font.system(size: 30, weight: .medium))
+                            .foregroundStyle(.blue)
+                            .frame(width: 80, height: 80)
+                            .background(Color.blue.opacity(0.2))
+                            .cornerRadius(10)
+                        
+                        
+                        LabeledAttribute(title: jobListing.title, text: jobListing.company,
+                                         titleFont: .largeTitle.bold(), titleStyle: .black,
+                                         textFont: .title)
+                        .padding(.leading, 20)
+                        
+                        if !isCompact {
+                            Spacer(minLength: 200)
+                        }
+                        
+                    }
+                    .zIndex(100)
+                    .padding(.bottom, 15)
+                    
+                    HStack() {
+                        VStack(alignment: .leading, spacing: 15) {
+                            LabeledAttribute(title: "Applied", text: viewModel.formattedDate)
+                            
+                            LabeledAttribute(title: "Location", text: jobListing.location ?? "Not Provided")
+                        }
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .leading, spacing: 15) {
+                            LabeledAttribute(
+                                title: "Salary Range",
+                                text: jobListing.salaryRange ?? "Not Provided"
+                            )
+                            
+                            LabeledAttribute(
+                                title: "Schedule",
+                                text: { return "Full-Time"
+                                    //var parts: [String] = []
+                                    //if let schedule = jobListing.schedule { parts.append(schedule) }
+                                    //if let workType = jobListing.workLocationType { parts.append(workType.rawValue) }
+                                    //return parts.isEmpty ? "Not Provided" : parts.joined(separator: " · ")
+                                }()
+                            )
+                        }
+                        
+                        Spacer()
                     }
                     
-                    Spacer()
-                    
-                    VStack(alignment: .leading, spacing: 15) {
-                        LabeledAttribute(
-                            title: "Salary Range",
-                            text: jobListing.salaryRange ?? "Not Provided"
-                        )
-                        
-                        LabeledAttribute(
-                            title: "Schedule",
-                            text: { return "Full-Time"
-                                //var parts: [String] = []
-                                //if let schedule = jobListing.schedule { parts.append(schedule) }
-                                //if let workType = jobListing.workLocationType { parts.append(workType.rawValue) }
-                                //return parts.isEmpty ? "Not Provided" : parts.joined(separator: " · ")
-                            }()
-                        )
-                    }
-                    
-                    Spacer()
                 }
+                .modifier(ViewEffectsModifier())
                 
+                if !isCompact {
+                    CustomPickerView(
+                        options: ApplicationStatus.allCases,
+                        displayName: { $0.rawValue },
+                        selection: Binding(
+                            get: { viewModel.jobListing.applicationStatus },
+                            set: { viewModel.jobStatusChanged($0, context: dataContainer.context) }
+                        ),
+                        backgroundColor: sideBarColor,
+                        borderColor: sideBarDividerColor,
+                        textColor: Color.black,
+                        expandedPickerId: $expandedPickerId,
+                        pickerId: "jobStatus"
+                    )
+                    .padding(.top, 40)
+                    .padding(.trailing, 50)  // Changed from 40 to 0 since ViewEffectsModifier adds 25
+                    .frame(maxWidth: 200)
+                    .zIndex(100)
+                }
             }
-            .modifier(ViewEffectsModifier())
+            .zIndex(110)
             
             let fields: [(title: String, value: String?)] = [
                 ("Notes", jobListing.notes),
@@ -272,6 +303,12 @@ extension JobDetailView {
             self.jobListing = jobListing
         }
         
+        func jobStatusChanged(_ newStatus: ApplicationStatus, context: ModelContext) {
+            if newStatus == jobListing.applicationStatus { return }
+            jobListing.applicationStatus = newStatus
+            try? context.save()
+        }
+        
         var formattedDate: String {
             let formatter = DateFormatter()
             formatter.dateStyle = .medium
@@ -305,5 +342,6 @@ extension JobDetailView {
     }
     .frame(width: 900, height: 700)
     .environmentObject(DashboardTopBarViewModel())
+    .environment(SwiftDataContainer(false))
 }
 

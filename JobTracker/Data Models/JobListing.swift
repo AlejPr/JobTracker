@@ -77,16 +77,16 @@ final class JobListing: Identifiable, Hashable, CustomStringConvertible {
 
 extension JobListing {
     
-    enum ApplicationStatus: String, Codable {
-        case applied = "Applied",
+    enum ApplicationStatus: String, Codable, CaseIterable {
+        case saved = "Saved",
+             emailed = "Emailed",
+             applied = "Applied",
              rejected = "Rejected",
              ghosted = "Ghosted",
              interviewing = "Interviewing",
              offerPending = "Offer Pending",
-             accepted = "Accepted",
-             saved = "Saved",
-             emailed = "Emailed"
-        
+             accepted = "Accepted"
+             
         var description: String {
             self.rawValue
         }

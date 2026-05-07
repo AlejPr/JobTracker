@@ -9,6 +9,7 @@ import SwiftData
 struct ListJobsView: View {
     
     @Query(sort: \JobListing.timeStampApplied, order: .reverse) private var jobListings: [JobListing]
+    @EnvironmentObject var dashboardViewModel: DashboardTopBarViewModel
     @Environment(\.appendNavigationPath) var appendToNavigationStack
     
     var body: some View {
@@ -26,23 +27,23 @@ struct ListJobsView: View {
     
     var contentView: some View {
         ScrollView {
-            
-            Spacer()
-                .frame(height: 20)
-            
-            let sortedListingGroups = groupJobListingsByDate(jobListings)
-            ForEach(sortedListingGroups, id: \.self) { group in
-                JobListingGroup(
-                    jobListings: group,
-                    jobListingTapped: { appendToNavigationStack(.jobListing($0), true) }
-                )
-                .padding(.bottom, 20)
+            LazyVStack(spacing: 0, pinnedViews: []) {
+                
+                Color.clear.frame(height: 20)
+                
+                let sortedListingGroups = groupJobListingsByDate(jobListings)
+                ForEach(sortedListingGroups.indices, id: \.self) { index in
+                    JobListingGroup(
+                        jobListings: sortedListingGroups[index],
+                        jobListingTapped: { listing in appendToNavigationStack(.jobListing(listing), true) }
+                    )
+                    .padding(.bottom, 20)
+                }
+                
+                Color.clear.frame(height: 80)
             }
-            
-            Spacer()
-                .frame(height: 80)
-            
-        }.background(Color.white)
+        }
+        .background(Color.white)
     }
     
     private func groupJobListingsByDate(_ listings:[JobListing]) -> [[JobListing]] {
@@ -95,31 +96,27 @@ struct ListJobsView: View {
 //MARK: - Section
 fileprivate struct JobListingGroup: View {
     
-    var jobListings: [JobListing]
-    var jobListingTapped: (JobListing) -> Void
-    var dgClass: dgInterval { dgInterval.classify(jobListings.first!.timeStampApplied) }
+    let jobListings: [JobListing]
+    let jobListingTapped: (JobListing) -> Void
+    
+    private var dgClass: dgInterval { dgInterval.classify(jobListings.first!.timeStampApplied) }
+    private var headertext: String { dgClass == .older ? headerDate : dgClass.rawValue }
+    private var headerDate: String { dateFormatter.string(from: jobListings.first!.timeStampApplied) }
     
     var body: some View {
-        
         LazyVStack(alignment: .leading, spacing: 8) {
-            let headertext = dgClass == .older ? headerDate : dgClass.rawValue
             Text(headertext + " - \(jobListings.count)")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(Color(red: 75/255, green: 85/255, blue: 99/255))
                 .padding(.leading, 30)
             
-            ForEach(jobListings, id: \.self) { jobListing in
+            ForEach(jobListings, id: \.id) { jobListing in
                 JobListingView(
                     jobListing: jobListing,
                     tapped: jobListingTapped
                 )
             }
         }
-        
-    }
-    
-    private var headerDate: String {
-        return dateFormatter.string(from: jobListings.first!.timeStampApplied)
     }
     
 }
@@ -128,24 +125,25 @@ fileprivate struct JobListingGroup: View {
 //MARK: - Rows
 fileprivate struct JobListingView: View {
     
-    var jobListing: JobListing
-    var tapped: (JobListing) -> Void
+    let jobListing: JobListing
+    let tapped: (JobListing) -> Void
+    
+    private var attributes: [(String, Color)] { calculateAttributes() }
+    private var showAttributes: Bool { !attributes.isEmpty }
+    private var companyAbbreviation: String {
+        let split = jobListing.company.split(separator: " ")
+        if split.count > 1 { 
+            return "\(split[0].prefix(1).uppercased() + split[1].prefix(1).uppercased())" 
+        }
+        return jobListing.company.prefix(2).uppercased()
+    }
     
     var body: some View {
-        let attributes = calculateAttributes()
-        let showAttributes = !attributes.isEmpty
-        
         Button { tapped(jobListing) }
         label: {
             HStack {
                 
                 //Image
-                let split = jobListing.company.split(separator: " ")
-                let companyAbbreviation: String = {
-                    if split.count > 1 { return "\(split[0].prefix(1).uppercased() + split[1].prefix(1).uppercased())" }
-                    return jobListing.company.prefix(2).uppercased()
-                }()
-                
                 Text(companyAbbreviation)
                     .font(Font.system(size: 16, weight: .medium))
                     .foregroundStyle(.blue)
