@@ -9,18 +9,45 @@ import SwiftData
 struct ListJobsView: View {
     
     @Query(sort: \JobListing.timeStampApplied, order: .reverse) private var jobListings: [JobListing]
-    @EnvironmentObject var dashboardViewModel: DashboardTopBarViewModel
     @Environment(\.appendNavigationPath) var appendToNavigationStack
+    @EnvironmentObject var dashboardViewModel: DashboardTopBarViewModel
+    
+    private var filteredListings: [JobListing] {
+        let searchText = dashboardViewModel.searchText.trimmingCharacters(in: .whitespaces)
+        
+        if searchText.isEmpty {
+            return jobListings
+        }
+        
+        return jobListings.filter { listing in
+            listing.title.localizedCaseInsensitiveContains(searchText) ||
+            listing.company.localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     var body: some View {
-        if !jobListings.isEmpty {
+        if !filteredListings.isEmpty {
             contentView
         }
-        else {
+        else if jobListings.isEmpty {
             ZStack {
                 Color.blue
                 Text("No Listings!")
                     .foregroundStyle(.black)
+            }
+        }
+        else {
+            // Search returned no results
+            ZStack {
+                Color.white
+                VStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.gray)
+                    Text("No results for \"\(dashboardViewModel.searchText)\"")
+                        .font(.title2)
+                        .foregroundStyle(.gray)
+                }
             }
         }
     }
@@ -31,7 +58,7 @@ struct ListJobsView: View {
                 
                 Color.clear.frame(height: 20)
                 
-                let sortedListingGroups = groupJobListingsByDate(jobListings)
+                let sortedListingGroups = groupJobListingsByDate(filteredListings)
                 ForEach(sortedListingGroups.indices, id: \.self) { index in
                     JobListingGroup(
                         jobListings: sortedListingGroups[index],
@@ -292,11 +319,13 @@ fileprivate struct PreviewStruct: View {
         if !empty {
             ListJobsView()
                 .sampleContainer()
+                .environmentObject(DashboardTopBarViewModel())
                 .frame(width: 700, height: 500)
         }
         else {
             ListJobsView()
                 .modelContainer(for: [JobListing.self])
+                .environmentObject(DashboardTopBarViewModel())
         }
     }
 }
