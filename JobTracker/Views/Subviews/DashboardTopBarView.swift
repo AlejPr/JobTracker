@@ -5,7 +5,6 @@
 
 
 import SwiftUI
-import Combine
 
 //MARK: - Top Bar
 struct DashboardTopBarView: View {
@@ -269,14 +268,14 @@ extension DashboardTopBarView {
 extension DashboardTopBarView {
     
     @MainActor
-    final class ViewModel: ObservableObject {
+    @Observable final class ViewModel {
         
-        @Published var schemaStack: [DashboardTopBarViewSchema] = [.searchField]
+        var schemaStack: [DashboardTopBarViewSchema] = [.searchField]
+
+        var searchText: String = ""
         
-        @Published var searchText: String = ""
-        
-        @Published var entryViewAddJobButtonEnabled: Bool = false
-        @Published var entryViewAddJobButtonPressed: Bool = false
+        var entryViewAddJobButtonEnabled: Bool = false
+        var entryViewAddJobButtonPressed: Bool = false
         
         var filterButtonPressed = { }
         var sortButtonPressed = { }

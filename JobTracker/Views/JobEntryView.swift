@@ -5,17 +5,16 @@
 
 import SwiftUI
 import SwiftData
-import Combine
 import WebKit
 
 
 struct JobEntryView: View {
 
-    @StateObject private var viewModel = ViewModel()
-    @StateObject private var webPageSnapShotViewModel = WebpageSnapshotView.ViewModel()
+    @State private var viewModel = ViewModel()
+    @State private var webPageSnapShotViewModel = WebpageSnapshotView.ViewModel()
     
     @Environment(SwiftDataContainer.self) private var dataContainer
-    @EnvironmentObject var tbVM: DashboardTopBarViewModel
+    @Environment(DashboardTopBarViewModel.self) var tbVM
     @Environment(\.customDismiss) var dismiss
         
     @FocusState private var isListingLinkFocused: Bool
@@ -246,7 +245,7 @@ struct JobEntryView: View {
                 }
             }
 
-            WebpageSnapshotView(viewModel: webPageSnapShotViewModel,
+            WebpageSnapshotView(viewModel: $webPageSnapShotViewModel,
                                 currentURLString: $viewModel.listingLink,
                                 isExpanded: $viewModel.webViewIsExpanded,
                                 canExpand: !isCompact)
@@ -298,27 +297,27 @@ struct JobEntryView: View {
 extension JobEntryView {
     
     @MainActor
-    final class ViewModel: ObservableObject {
+    @Observable final class ViewModel {
                 
-        @Published var listingLink: String = ""
-        @Published var jobTitle: String = ""
-        @Published var companyName: String = ""
-        @Published var applicationStatus: ApplicationStatus = .applied
-        @Published var location: String = ""
-        @Published var workLocationType: WorkLocationType = .onSite
-        @Published var salaryRange: String = ""
-        @Published var salaryNotListed: Bool = false
-        @Published var salaryType: SalaryType = .yearly
-        @Published var notes: String = ""
-        @Published var requirements: String = ""
-        @Published var jobDescription: String = ""
-        
-        @Published var saveWebPage: Bool = true
-        @Published var expandedPickerId: String?
-        @Published var showTooltip: Bool = false
-        @Published var webViewIsExpanded: Bool = false
-        @Published var autofillButtonDisabled: Bool = false
-        @Published var autofillInProgress: Bool = false
+        var listingLink: String = ""
+        var jobTitle: String = ""
+        var companyName: String = ""
+        var applicationStatus: ApplicationStatus = .applied
+        var location: String = ""
+        var workLocationType: WorkLocationType = .onSite
+        var salaryRange: String = ""
+        var salaryNotListed: Bool = false
+        var salaryType: SalaryType = .yearly
+        var notes: String = ""
+        var requirements: String = ""
+        var jobDescription: String = ""
+    
+        var saveWebPage: Bool = true
+        var expandedPickerId: String?
+        var showTooltip: Bool = false
+        var webViewIsExpanded: Bool = false
+        var autofillButtonDisabled: Bool = false
+        var autofillInProgress: Bool = false
         
 
         func saveNewListing(with dataContainer: SwiftDataContainer,_ snapshotViewModel: WebpageSnapshotView.ViewModel) async throws {

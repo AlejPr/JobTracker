@@ -5,14 +5,13 @@
 
 import SwiftUI
 import PDFKit
-import Combine
 import SwiftData
 
 
 struct JobDetailView: View {
     
-    @StateObject private var viewModel: ViewModel
-    @EnvironmentObject var dashboardViewModel: DashboardTopBarViewModel
+    @State private var viewModel: ViewModel
+    @Environment(DashboardTopBarViewModel.self) private var dashboardViewModel
     @Environment(SwiftDataContainer.self) private var dataContainer
 
     @State var webViewIsExpanded: Bool = false
@@ -25,7 +24,7 @@ struct JobDetailView: View {
     
     init(jobListing: JobListing, geometryProxy: GeometryProxy) {
         self.geometryProxy = geometryProxy
-        _viewModel = StateObject(wrappedValue: ViewModel(jobListing: jobListing))
+        viewModel = ViewModel(jobListing: jobListing)
     }
     
     var body: some View {
@@ -295,7 +294,7 @@ extension JobDetailView {
 extension JobDetailView {
     
     @MainActor
-    final private class ViewModel: ObservableObject {
+    @Observable final internal class ViewModel {
         
         var jobListing: JobListing
         
@@ -341,7 +340,7 @@ extension JobDetailView {
         JobDetailView(jobListing: JobListing.realJobListingSample, geometryProxy: proxy)
     }
     .frame(width: 900, height: 700)
-    .environmentObject(DashboardTopBarViewModel())
+    .environment(DashboardTopBarViewModel())
     .environment(SwiftDataContainer(false))
 }
 

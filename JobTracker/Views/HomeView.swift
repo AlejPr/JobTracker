@@ -5,7 +5,6 @@
 
 import SwiftUI
 import SwiftData
-import Combine
 
 private let minSidebarWidth: CGFloat = 230
 private let maxSidebarWidth: CGFloat = 375
@@ -14,15 +13,15 @@ public let sideBarDividerColor = Color(red: 227/255, green: 229/255, blue: 233/2
 
 struct HomeView: View {
     
-    @StateObject private var viewModel: ViewModel
-    @StateObject private var dashboardViewModel: DashboardTopBarViewModel
+    @State private var viewModel: ViewModel
+    @State private var dashboardViewModel: DashboardTopBarViewModel
     
     @FocusState private var isSearchFieldFocused: Bool
     
     init() {
         let dbVM = DashboardTopBarView.ViewModel()
-        _dashboardViewModel = StateObject(wrappedValue: dbVM)
-        _viewModel = StateObject(wrappedValue: ViewModel(dbVM))
+        _dashboardViewModel = State(initialValue: dbVM)
+        _viewModel = State(initialValue: ViewModel(dbVM))
     }
     
     var body: some View {
@@ -73,7 +72,7 @@ struct HomeView: View {
                         onSettingsTapped: viewModel.settingsTapped,
                         onBackTapped: viewModel.backButtonTapped,
                     )
-                    .environmentObject(dashboardViewModel)
+                    .environment(dashboardViewModel)
                     .zIndex(100)
                     
                     //Divider Bar
@@ -109,7 +108,7 @@ struct HomeView: View {
                                 }
                             }
                     }
-                    .environmentObject(dashboardViewModel)
+                    .environment(dashboardViewModel)
                     .environment(\.appendNavigationPath, viewModel.appendToNavigationStack(_:animated:))
 
                 }
@@ -244,11 +243,11 @@ struct SidebarItemView: View {
 extension HomeView {
     
     @MainActor
-    final class ViewModel: ObservableObject {
+    @Observable final class ViewModel {
         
-        @Published var navigationPathStack: [NavigationDestination] = [.jobListings]
-        @Published var sideBarSelectedItem: SidebarItem = .jobListings
-        @Published var shouldShowAddJobButton: Bool = true
+        var navigationPathStack: [NavigationDestination] = [.jobListings]
+        var sideBarSelectedItem: SidebarItem = .jobListings
+        var shouldShowAddJobButton: Bool = true
         
         unowned let tbVM: DashboardTopBarView.ViewModel
                 

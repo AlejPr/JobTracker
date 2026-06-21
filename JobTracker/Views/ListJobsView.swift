@@ -10,7 +10,7 @@ struct ListJobsView: View {
     
     @Query(sort: \JobListing.timeStampApplied, order: .reverse) private var jobListings: [JobListing]
     @Environment(\.appendNavigationPath) var appendToNavigationStack
-    @EnvironmentObject var dashboardViewModel: DashboardTopBarViewModel
+    @Environment(DashboardTopBarViewModel.self) var dashboardViewModel
     
     private var filteredListings: [JobListing] {
         let searchText = dashboardViewModel.searchText.trimmingCharacters(in: .whitespaces)
@@ -21,7 +21,8 @@ struct ListJobsView: View {
         
         return jobListings.filter { listing in
             listing.title.localizedCaseInsensitiveContains(searchText) ||
-            listing.company.localizedCaseInsensitiveContains(searchText)
+            listing.company.localizedCaseInsensitiveContains(searchText) ||
+            listing.jobDescription?.localizedCaseInsensitiveContains(searchText) ?? false
         }
     }
     
@@ -319,13 +320,13 @@ fileprivate struct PreviewStruct: View {
         if !empty {
             ListJobsView()
                 .sampleContainer()
-                .environmentObject(DashboardTopBarViewModel())
+                .environment(DashboardTopBarViewModel())
                 .frame(width: 700, height: 500)
         }
         else {
             ListJobsView()
                 .modelContainer(for: [JobListing.self])
-                .environmentObject(DashboardTopBarViewModel())
+                .environment(DashboardTopBarViewModel())
         }
     }
 }

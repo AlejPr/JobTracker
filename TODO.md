@@ -22,4 +22,5 @@
 - Improve PDF Saving resolution
 - Undo button for LLM Autofill
 - Fix scrollview position moving because of lazy vstack
-
+- Go through Memory graph and debug leaks
+- 

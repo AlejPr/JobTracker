@@ -5,11 +5,10 @@
 
 import SwiftUI
 import WebKit
-import Combine
 
 struct WebpageSnapshotView: View {
     
-    @ObservedObject var viewModel: ViewModel
+    @Binding var viewModel: ViewModel
     
     @State var currentWebpageZoom: CGFloat = 1.0
     @Binding var currentURLString: String
@@ -139,12 +138,12 @@ extension WebpageSnapshotView {
 extension WebpageSnapshotView {
     
     @MainActor
-    final class ViewModel: ObservableObject {
+    @Observable final class ViewModel {
         
-        @Published var currentURL: URL? = nil
-        @Published var currentImage: NSImage? = nil
-        @Published var fetchError: String? = nil
-        private weak var webView: WKWebView?
+        var currentURL: URL? = nil
+        var currentImage: NSImage? = nil
+        var fetchError: String? = nil
+        @ObservationIgnored private weak var webView: WKWebView?
         
         func updateURL(_ newURLString: String) {
             let trimmed = newURLString.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -212,10 +211,10 @@ fileprivate struct PreviewStruct: View {
     static let apple = "https://www.apple.org"
     @State var pageString = Self.google
     @State var isExpanded: Bool = false
-    @StateObject var vm = WebpageSnapshotView.ViewModel()
+    @State var vm = WebpageSnapshotView.ViewModel()
     
     var body: some View {
-        WebpageSnapshotView(viewModel: vm, currentURLString: $pageString, isExpanded: $isExpanded, canExpand: true)
+        WebpageSnapshotView(viewModel: $vm, currentURLString: $pageString, isExpanded: $isExpanded, canExpand: true)
     }
     
 }
