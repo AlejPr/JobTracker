@@ -29,6 +29,17 @@ public struct TextFieldPlaceholderStyle: ViewModifier {
 }
 
 
+public struct NoLineBreaks: ViewModifier {
+    @Binding var text: String
+    
+    public func body(content: Content) -> some View {
+        content.onChange(of: text) { _, newValue in
+            if newValue.contains(where: \.isNewline) { text = newValue.filter { !$0.isNewline} }
+        }
+    }
+}
+
+
 public struct PressedOpacityButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label

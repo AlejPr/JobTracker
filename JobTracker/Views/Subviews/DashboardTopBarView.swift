@@ -21,7 +21,7 @@ struct DashboardTopBarView: View {
     
     var body: some View {
         viewForCurrentSchema
-            .padding(.leading, 20)
+            .padding(.leading, 30)
             .frame(height: 70)
             .background(Color.white)
             .buttonStyle(.plain)
@@ -111,38 +111,57 @@ extension DashboardTopBarView {
     }
     
     
-    private var searchField: some View {
-        TextField("", text: Binding(
-            get: { viewModel.searchText },
-            set: { viewModel.searchText = $0 }
-        ))
-        .font(.title3)
-        .foregroundColor(.black)
-        .padding(.leading, 44)
-        .padding(.trailing, 16)
-        .frame(height: 48)
-        .cornerRadius(8)
-        .containerRelativeFrame(.horizontal, { length, _ in return max(220, length / 3) })
-        .textFieldStyle(.plain)
-        .focusable(false)
-        .focused($isSearchFieldFocused)
-        .alignmentGuide(.firstTextBaseline, computeValue: { _ in 10})
-        .modifier(TextFieldPlaceholderStyle(
-            showPlaceHolder: viewModel.searchText.isEmpty,
-            placeholder: "Search jobs, companies...",
-            textColor: Color.gray,
-            leadingOffset: 28,
-            font: Font.system(size: 16, weight: .light)
-        ))
+    internal var searchField: some View {
+        HStack {
+            TextField("", text: Binding(
+                get: { viewModel.searchText },
+                set: { viewModel.searchText = $0 }
+            ))
+            .lineLimit(1)
+            .font(.title3)
+            .foregroundColor(.black)
+            .padding(.leading, 44)
+            .frame(height: 48)
+            .cornerRadius(8)
+            .containerRelativeFrame(.horizontal, { length, _ in return max(220, length / 3) })
+            .textFieldStyle(.plain)
+            .focusable(false)
+            .focused($isSearchFieldFocused)
+            .alignmentGuide(.firstTextBaseline, computeValue: { _ in 10})
+            .modifier(
+                TextFieldPlaceholderStyle(
+                    showPlaceHolder: viewModel.searchText.isEmpty,
+                    placeholder: "Search jobs, companies...",
+                    textColor: Color.gray,
+                    leadingOffset: 28,
+                    font: Font.system(size: 16, weight: .light)
+                ))
+            
+            Spacer()
+                .frame(width: 35)
+        }
         .overlay(
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
                     .font(.system(size: 18))
-                    .padding(.leading, 14)
-                    .padding(.bottom, 2)
+                
                 Spacer()
-            })
+                
+                Button { viewModel.searchText = "" }
+                label: {
+                    Image(systemName: "xmark")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 18))
+                        .frame(width: 44, height: 44, alignment: .center)
+                        .contentShape(.rect)
+                }
+                .padding(.trailing, -14)
+                .buttonStyle(.plain)
+            }
+            .padding(.bottom, 2)
+            .padding(.horizontal, 14)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.gray.opacity(0.3), lineWidth: 1)
@@ -312,14 +331,29 @@ extension DashboardTopBarView {
 typealias DashboardTopBarViewModel = DashboardTopBarView.ViewModel
 
 
-#Preview {
-    ZStack {
-        Color.blue
+#Preview("Search Field") {
+    
+    struct PreviewHost: View {
         
-        DashboardTopBarView.ToolTipButton(icon: "arrow.up.right", tooltip: "Open Link") {
-            //
+        @FocusState private var isFocused: Bool
+        @State private var viewModel = DashboardTopBarViewModel()
+        
+        var body: some View {
+            ZStack(alignment: .topLeading) {
+                Color.blue
+                GeometryReader { geo in
+                    DashboardTopBarView(
+                        viewModel: viewModel,
+                        isSearchFieldFocused: $isFocused,
+                        geometryProxy: geo,
+                        onSettingsTapped: {},
+                        onBackTapped: {}
+                    )
+                }
+            }
+            .frame(width: 700, height: 200)
         }
-    } .frame(width: 200, height: 200)
-
+    }
+    return PreviewHost()
+    
 }
-

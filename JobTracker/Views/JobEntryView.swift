@@ -94,6 +94,7 @@ struct JobEntryView: View {
                                 axis: .horizontal,
                                 textFieldText: $viewModel.listingLink)
                     .focused($isListingLinkFocused)
+                    .lineLimit(1)
                 
             }
             
@@ -104,7 +105,7 @@ struct JobEntryView: View {
                 autofillInProgress: viewModel.autofillInProgress,
                 textFieldText: $viewModel.jobTitle
             )
-            
+            .lineLimit(1)
             .onChange(of: viewModel.jobTitle) { _, _ in
                 checkCanAddJob()
             }
@@ -117,6 +118,7 @@ struct JobEntryView: View {
                     autofillInProgress: viewModel.autofillInProgress,
                     textFieldText: $viewModel.companyName
                 )
+                .lineLimit(1)
                 .onChange(of: viewModel.companyName) { _, _ in
                     checkCanAddJob()
                 }
@@ -144,6 +146,7 @@ struct JobEntryView: View {
                     autofillInProgress: viewModel.autofillInProgress,
                     textFieldText: $viewModel.location
                 )
+                .lineLimit(1)
                 
                 CustomPickerView(
                     options: WorkLocationType.allCases,
@@ -169,6 +172,7 @@ struct JobEntryView: View {
                     autofillInProgress: viewModel.autofillInProgress,
                     textFieldText: $viewModel.salaryRange
                 )
+                .lineLimit(1)
                 
                 CustomPickerView(
                     options: SalaryType.allCases,
