@@ -73,157 +73,12 @@ struct JobEntryView: View {
     
     //MARK: - Info
     var infoBody: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            
-            // Listing Link
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Listing Link")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.black)
-                    
-                    Spacer()
-                    
-                    let isEnabled = viewModel.autofillButtonDisabled ? false : isValidUrl(url: viewModel.listingLink)
-                    AutofillButton(isEnabled: isEnabled, inProgress: viewModel.autofillInProgress) {
-                        viewModel.attemptAutofill(with: webPageSnapShotViewModel)
-                    }
-                }
-                
-                StyledTextField(placeHolderText: "https://example.com/job-listing",
-                                axis: .horizontal,
-                                textFieldText: $viewModel.listingLink)
-                    .focused($isListingLinkFocused)
-                    .lineLimit(1)
-                
-            }
-            
-            LabeledTextField(
-                header: "Job Title",
-                placeHolderText: "macOS Developer",
-                required: true,
-                autofillInProgress: viewModel.autofillInProgress,
-                textFieldText: $viewModel.jobTitle
-            )
-            .lineLimit(1)
-            .onChange(of: viewModel.jobTitle) { _, _ in
-                checkCanAddJob()
-            }
-            
-            HStack(alignment: .bottom, spacing: 20) {
-                LabeledTextField(
-                    header: "Company Name",
-                    placeHolderText: "Apple Inc.",
-                    required: true,
-                    autofillInProgress: viewModel.autofillInProgress,
-                    textFieldText: $viewModel.companyName
-                )
-                .lineLimit(1)
-                .onChange(of: viewModel.companyName) { _, _ in
-                    checkCanAddJob()
-                }
-                
-                CustomPickerView(
-                    options: [ApplicationStatus.applied, ApplicationStatus.saved, ApplicationStatus.emailed],
-                    displayName: { $0.rawValue },
-                    selection: $viewModel.applicationStatus,
-                    backgroundColor: sideBarColor,
-                    borderColor: sideBarDividerColor,
-                    textColor: Color.black,
-                    padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
-                    expandedPickerId: $viewModel.expandedPickerId,
-                    pickerId: "ApplicationStatusTypePickerID"
-                )
-                .frame(maxWidth: 120)
-                
-            }
-            .zIndex(1100)
-            
-            HStack(alignment: .bottom, spacing: 20) {
-                LabeledTextField(
-                    header: "Location",
-                    placeHolderText: "Cupertino, CA",
-                    autofillInProgress: viewModel.autofillInProgress,
-                    textFieldText: $viewModel.location
-                )
-                .lineLimit(1)
-                
-                CustomPickerView(
-                    options: WorkLocationType.allCases,
-                    displayName: { $0.rawValue },
-                    selection: $viewModel.workLocationType,
-                    backgroundColor: sideBarColor,
-                    borderColor: sideBarDividerColor,
-                    textColor: Color.black,
-                    padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
-                    expandedPickerId: $viewModel.expandedPickerId,
-                    pickerId: "WorkLocationTypePickerID"
-                )
-                .frame(minWidth: 140)
-            }
-            .zIndex(1000)
-            
-            // Salary Range
-            HStack(alignment: .bottom, spacing: 20) {
-                LabeledTextField(
-                    header: "Salary Range",
-                    placeHolderText: "$120k - 150k",
-                    disabled: viewModel.salaryNotListed,
-                    autofillInProgress: viewModel.autofillInProgress,
-                    textFieldText: $viewModel.salaryRange
-                )
-                .lineLimit(1)
-                
-                CustomPickerView(
-                    options: SalaryType.allCases,
-                    displayName: { $0.rawValue },
-                    selection: $viewModel.salaryType,
-                    backgroundColor: sideBarColor,
-                    borderColor: sideBarDividerColor,
-                    textColor: Color.black,
-                    padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
-                    disabled: viewModel.salaryNotListed,
-                    expandedPickerId: $viewModel.expandedPickerId,
-                    pickerId: "SalaryRangeTypePickerID"
-                )
-                .frame(minWidth: 140)
-                
-                LabeledButton(
-                    selected: $viewModel.salaryNotListed,
-                    labelText: "Not Listed"
-                )
-                .padding(.bottom, 10)
-            }
-            .zIndex(999)
-            
-            LabeledTextField(
-                header: "Notes",
-                placeHolderText: "Contract Job, 18 months only",
-                axis: .vertical,
-                autofillInProgress: viewModel.autofillInProgress,
-                textFieldText: $viewModel.notes
-            )
-            
-            LabeledTextField(
-                header: "Requirements",
-                placeHolderText: "3 Years of experience in SwiftUI",
-                axis: .vertical,
-                autofillInProgress: viewModel.autofillInProgress,
-                textFieldText: $viewModel.requirements
-            )
-            
-            LabeledTextField(
-                header: "Description",
-                placeHolderText: "Develop great applications for MacOS devices!",
-                axis: .vertical,
-                autofillInProgress: viewModel.autofillInProgress,
-                textFieldText: $viewModel.jobDescription
-            )
-            
-            Spacer()
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
+        InfoBody(
+            viewModel: viewModel,
+            isListingLinkFocused: $isListingLinkFocused,
+            onAutofill: { viewModel.attemptAutofill(with: webPageSnapShotViewModel) },
+            onRequiredFieldChange: checkCanAddJob
+        )
     }
     
     
@@ -384,14 +239,16 @@ extension JobEntryView {
                 do {
                     let webPageText = try await snapshotViewModel.getPageText()
                     let response = try await AutofillServiceProvider.attemptAutofill(with: webPageText)
-                    await MainActor.run { [weak self] in
-                        self?.updateFields(with: response)
-                        withAnimation { self?.autofillInProgress = false }
+                    await MainActor.run {
+                        withAnimation {
+                            self.updateFields(with: response)
+                            self.autofillInProgress = false
+                        }
                     }
                 } catch {
                     print("[JobEntryView] Error, could not complete autofill request! \(error)")
-                    await MainActor.run { [weak self] in
-                        withAnimation { self?.autofillInProgress = false }
+                    await MainActor.run {
+                        withAnimation { self.autofillInProgress = false }
                     }
                 }
             }
@@ -417,8 +274,171 @@ extension JobEntryView {
 
 //MARK: - Subviews
 extension JobEntryView {
-    
-    
+
+
+    //MARK: - Info Body
+    private struct InfoBody: View {
+        @Bindable var viewModel: ViewModel
+        @FocusState.Binding var isListingLinkFocused: Bool
+        let onAutofill: () -> Void
+        let onRequiredFieldChange: () -> Void
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 24) {
+
+                // Listing Link
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Listing Link")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.black)
+
+                        Spacer()
+
+                        let isEnabled = viewModel.autofillButtonDisabled ? false : isValidUrl(url: viewModel.listingLink)
+                        AutofillButton(isEnabled: isEnabled, inProgress: viewModel.autofillInProgress) {
+                            onAutofill()
+                        }
+                    }
+
+                    StyledTextField(placeHolderText: "https://example.com/job-listing",
+                                    axis: .horizontal,
+                                    textFieldText: $viewModel.listingLink)
+                        .focused($isListingLinkFocused)
+                        .lineLimit(1)
+
+                }
+
+                LabeledTextField(
+                    header: "Job Title",
+                    placeHolderText: "macOS Developer",
+                    required: true,
+                    autofillInProgress: viewModel.autofillInProgress,
+                    textFieldText: $viewModel.jobTitle
+                )
+                .lineLimit(1)
+                .onChange(of: viewModel.jobTitle) { _, _ in
+                    onRequiredFieldChange()
+                }
+
+                HStack(alignment: .bottom, spacing: 20) {
+                    LabeledTextField(
+                        header: "Company Name",
+                        placeHolderText: "Apple Inc.",
+                        required: true,
+                        autofillInProgress: viewModel.autofillInProgress,
+                        textFieldText: $viewModel.companyName
+                    )
+                    .lineLimit(1)
+                    .onChange(of: viewModel.companyName) { _, _ in
+                        onRequiredFieldChange()
+                    }
+
+                    CustomPickerView(
+                        options: [ApplicationStatus.applied, ApplicationStatus.saved, ApplicationStatus.emailed],
+                        displayName: { $0.rawValue },
+                        selection: $viewModel.applicationStatus,
+                        backgroundColor: sideBarColor,
+                        borderColor: sideBarDividerColor,
+                        textColor: Color.black,
+                        padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
+                        expandedPickerId: $viewModel.expandedPickerId,
+                        pickerId: "ApplicationStatusTypePickerID"
+                    )
+                    .frame(maxWidth: 120)
+
+                }
+                .zIndex(1100)
+
+                HStack(alignment: .bottom, spacing: 20) {
+                    LabeledTextField(
+                        header: "Location",
+                        placeHolderText: "Cupertino, CA",
+                        autofillInProgress: viewModel.autofillInProgress,
+                        textFieldText: $viewModel.location
+                    )
+                    .lineLimit(1)
+
+                    CustomPickerView(
+                        options: WorkLocationType.allCases,
+                        displayName: { $0.rawValue },
+                        selection: $viewModel.workLocationType,
+                        backgroundColor: sideBarColor,
+                        borderColor: sideBarDividerColor,
+                        textColor: Color.black,
+                        padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
+                        expandedPickerId: $viewModel.expandedPickerId,
+                        pickerId: "WorkLocationTypePickerID"
+                    )
+                    .frame(minWidth: 140)
+                }
+                .zIndex(1000)
+
+                // Salary Range
+                HStack(alignment: .bottom, spacing: 20) {
+                    LabeledTextField(
+                        header: "Salary Range",
+                        placeHolderText: "$120k - 150k",
+                        disabled: viewModel.salaryNotListed,
+                        autofillInProgress: viewModel.autofillInProgress,
+                        textFieldText: $viewModel.salaryRange
+                    )
+                    .lineLimit(1)
+
+                    CustomPickerView(
+                        options: SalaryType.allCases,
+                        displayName: { $0.rawValue },
+                        selection: $viewModel.salaryType,
+                        backgroundColor: sideBarColor,
+                        borderColor: sideBarDividerColor,
+                        textColor: Color.black,
+                        padding: EdgeInsets(top: 11, leading: 14, bottom: 11, trailing: 14),
+                        disabled: viewModel.salaryNotListed,
+                        expandedPickerId: $viewModel.expandedPickerId,
+                        pickerId: "SalaryRangeTypePickerID"
+                    )
+                    .frame(minWidth: 140)
+
+                    LabeledButton(
+                        selected: $viewModel.salaryNotListed,
+                        labelText: "Not Listed"
+                    )
+                    .padding(.bottom, 10)
+                }
+                .zIndex(999)
+
+                LabeledTextField(
+                    header: "Notes",
+                    placeHolderText: "Contract Job, 18 months only",
+                    axis: .vertical,
+                    autofillInProgress: viewModel.autofillInProgress,
+                    textFieldText: $viewModel.notes
+                )
+
+                LabeledTextField(
+                    header: "Requirements",
+                    placeHolderText: "3 Years of experience in SwiftUI",
+                    axis: .vertical,
+                    autofillInProgress: viewModel.autofillInProgress,
+                    textFieldText: $viewModel.requirements
+                )
+
+                LabeledTextField(
+                    header: "Description",
+                    placeHolderText: "Develop great applications for MacOS devices!",
+                    axis: .vertical,
+                    autofillInProgress: viewModel.autofillInProgress,
+                    textFieldText: $viewModel.jobDescription
+                )
+
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+        }
+    }
+
+
     //MARK: - Text Field
     private struct LabeledTextField: View {
         let header: String
